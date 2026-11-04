@@ -1,0 +1,124 @@
+PRESENTATION BUILD PROMPT — DAY 02
+======================================================================
+
+Copy everything below this line into your AI presentation tool (Claude, Gamma,
+Copilot in PowerPoint, Canva Magic Design, etc.).
+
+------------------------------------------------------------------------
+
+You are an expert TVET instructional designer and cybersecurity trainer.
+Build a professional, classroom-ready slide presentation for the session
+described below.
+
+SESSION DETAILS
+- Qualification : Cyber Threat Monitoring Level I (TESDA Competency Standards, ICT Sector)
+- Day           : Day 2 of a 15-day training program
+- Topic         : Computing and Network Foundations for Threat Monitoring
+- Sub-topic     : Operating systems, network architecture, web servers and scripting — the knowledge base behind every alert
+- Unit          : CS-ICT251101 Monitor and Report Cyber Threats (with Common Competency ICT311203 Perform Computer Operations)
+- Coverage      : Element 1 Required Knowledge 1.1–1.4: Windows, macOS and Linux; web server and website architecture; scripting languages; LAN, WAN and port forwarding
+- Audience      : Filipino TVET trainees, beginner level (senior high school
+                  graduates and career shifters). Explain jargon simply.
+- Delivery      : Blended. MORNING = synchronous session via Google Meet
+                  (lecture, live demonstration, or guided activity work).
+                  AFTERNOON = fully asynchronous; trainees work on the
+                  day's activities independently.
+
+LEARNING OBJECTIVES (show these on Slide 2)
+  1. Use basic Windows and Linux commands to check system, process and network information.
+  2. Describe how LANs, WANs, routers, firewalls and DMZs are arranged in an organization.
+  3. Explain IP addresses, ports, protocols and port forwarding.
+  4. Explain how a web request travels from a browser to a web server and how it is logged.
+  5. Read a simple script (Python / PowerShell) and explain what it does.
+
+HARD RULES
+1. The deck must have EXACTLY 15 slides — no more, no less. Follow the
+   slide-by-slide outline below in the same order.
+2. Maximum 5 bullet points per slide and maximum 12 words per bullet.
+3. Every slide must include:
+   a) a clear slide title,
+   b) the on-slide content (bullets, table, or diagram),
+   c) a suggested visual (icon, diagram, screenshot, or chart), and
+   d) SPEAKER NOTES of 80–150 words written in a conversational trainer
+      voice, including one check-for-understanding question where useful.
+4. Use real-world, Philippine-relevant examples where possible
+   (banks, BPOs, LGUs, schools, hospitals, e-wallets).
+5. Stay accurate: use correct terminology from NIST, MITRE ATT&CK and the
+   TESDA Competency Standards. Do not invent statistics; if a figure is
+   needed, mark it as "[verify latest figure]".
+6. Never show working malicious code, real exploit steps, or real
+   credentials. Demonstrations stay inside an isolated training lab.
+
+VISUAL DESIGN
+- Theme: clean, corporate "security operations" look.
+- Colors: navy (#1F3864) primary, blue (#2E75B6) accent, white background,
+  amber (#BF8F00) for warnings, green (#548235) for key points.
+- Fonts: Calibri / Segoe UI; titles 32–40 pt, body 20–24 pt.
+- Use icons and simple diagrams instead of dense text. 16:9 layout.
+- Footer on every slide: "Cyber Threat Monitoring Level I | Day 2" and slide number.
+
+SLIDE-BY-SLIDE OUTLINE (15 slides)
+
+Slide 1 — Title: Computing and Network Foundations for Threat Monitoring
+   • Day 2 of 15
+   • Visual: alert text with each part labeled (process, IP, port)
+
+Slide 2 — Learning Objectives
+   • The 5 objectives of the day
+
+Slide 3 — Why Foundations Matter
+   • Decode a sample alert: process → parent → IP → port
+   • Required knowledge 1.1–1.4 of the Competency Standards
+
+Slide 4 — Operating Systems in the Enterprise
+   • Windows vs Linux vs macOS comparison table
+   • Where each keeps its logs
+
+Slide 5 — Must-Know Monitoring Commands
+   • Windows vs Linux equivalent commands table
+
+Slide 6 — Windows Event IDs Every Analyst Should Know
+   • 4624, 4625, 4688, 4720, 4732, 1116/1117
+
+Slide 7 — Network Building Blocks
+   • LAN, WAN, router, switch, firewall, DMZ, VPN — network diagram
+
+Slide 8 — IP Addresses: Private vs Public
+   • Private ranges
+   • Why unknown public IPs matter
+
+Slide 9 — Ports and Protocols
+   • Top ports table with monitoring notes (22, 53, 80/443, 445, 3389, 3306)
+
+Slide 10 — Port Forwarding Explained
+   • Diagram: public IP:port → internal IP:port
+   • Risky rules (RDP, database)
+
+Slide 11 — How a Web Request Works
+   • DNS → web server → application → database → log
+
+Slide 12 — Reading a Web Access Log
+   • Annotated log line: IP, time, request, status, user-agent
+   • Status codes 200/301/403/404/500
+
+Slide 13 — Scripting Languages Analysts Meet
+   • PowerShell, Python, PHP, VBScript, Java — legitimate vs suspicious
+
+Slide 14 — Three Questions for Any Script
+   • What does it read? What does it change? Where does it connect?
+
+Slide 15 — Lab Time and Wrap-up
+   • Activities 2.1–2.4 overview and assets
+   • Key takeaways
+   • Preview of Day 3: threat landscape
+
+OUTPUT FORMAT
+Return the deck slide by slide using this structure:
+
+  SLIDE [n]: [Title]
+  On-slide content: ...
+  Visual: ...
+  Speaker notes: ...
+
+If your tool can generate the file directly, produce a .pptx with the
+speaker notes placed in the notes pane of each slide.

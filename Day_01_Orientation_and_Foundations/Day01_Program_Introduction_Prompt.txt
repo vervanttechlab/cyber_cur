@@ -1,0 +1,147 @@
+PRESENTATION BUILD PROMPT — DAY 01
+======================================================================
+
+Copy everything below this line into your AI presentation tool (Claude, Gamma,
+Copilot in PowerPoint, Canva Magic Design, etc.).
+
+------------------------------------------------------------------------
+
+You are an expert TVET instructional designer and cybersecurity trainer.
+Build a professional, classroom-ready slide presentation for the session
+described below.
+
+SESSION DETAILS
+- Qualification : Cyber Threat Monitoring Level I (TESDA Competency Standards, ICT Sector)
+- Day           : Day 1 of a 15-day training program
+- Topic         : Program Introduction: Welcome and How Our Training Works
+- Sub-topic     : Opening session of the program, presented on Google Meet before the Day 1 lesson. It covers the blended delivery format: synchronous mornings via Google Meet and asynchronous afternoons for activities.
+- Unit          : Introduction to CS-ICT251101 and CS-ICT251102 (with Basic Competencies: workplace communication, OSH)
+- Coverage      : Program welcome; blended delivery format; daily routine; Google Meet etiquette; asynchronous work expectations; submission, attendance and assessment; 15-day roadmap
+- Audience      : Filipino TVET trainees, beginner level (senior high school
+                  graduates and career shifters). Explain jargon simply.
+- Delivery      : Blended. MORNING = synchronous session via Google Meet
+                  (lecture, live demonstration, or guided activity work).
+                  AFTERNOON = fully asynchronous; trainees work on the
+                  day's activities independently.
+
+LEARNING OBJECTIVES (show these on Slide 3)
+  1. Describe the goal of the 15-day Cyber Threat Monitoring Level I program and the jobs it prepares them for.
+  2. Explain the daily schedule: synchronous morning sessions via Google Meet and fully asynchronous afternoons.
+  3. Explain how morning sessions are used: introducing and demonstrating a new lesson, or guided work on activities.
+  4. Follow the expected Google Meet etiquette and asynchronous work habits.
+  5. Describe how outputs are submitted, how attendance is checked, and how competency is assessed.
+
+HARD RULES
+1. The deck must have EXACTLY 15 slides — no more, no less. Follow the
+   slide-by-slide outline below in the same order.
+2. Maximum 5 bullet points per slide and maximum 12 words per bullet.
+3. Every slide must include:
+   a) a clear slide title,
+   b) the on-slide content (bullets, table, or diagram),
+   c) a suggested visual (icon, diagram, screenshot, or chart), and
+   d) SPEAKER NOTES of 80–150 words written in a conversational trainer
+      voice, including one check-for-understanding question where useful.
+4. Use real-world, Philippine-relevant examples where possible
+   (banks, BPOs, LGUs, schools, hospitals, e-wallets).
+5. Stay accurate: use correct terminology from NIST, MITRE ATT&CK and the
+   TESDA Competency Standards. Do not invent statistics; if a figure is
+   needed, mark it as "[verify latest figure]".
+6. Never show working malicious code, real exploit steps, or real
+   credentials. Demonstrations stay inside an isolated training lab.
+
+VISUAL DESIGN
+- Theme: clean, corporate "security operations" look.
+- Colors: navy (#1F3864) primary, blue (#2E75B6) accent, white background,
+  amber (#BF8F00) for warnings, green (#548235) for key points.
+- Fonts: Calibri / Segoe UI; titles 32–40 pt, body 20–24 pt.
+- Use icons and simple diagrams instead of dense text. 16:9 layout.
+- Footer on every slide: "Cyber Threat Monitoring Level I | Day 1" and slide number.
+
+SLIDE-BY-SLIDE OUTLINE (15 slides)
+
+Slide 1 — Title: Welcome to Cyber Threat Monitoring Level I
+   • Program title, trainer name and photo placeholder, training dates placeholder
+   • Tagline: "Watch. Verify. Report."
+   • Visual: SOC analyst at a multi-monitor desk
+
+Slide 2 — Meet Your Trainer and Classmates
+   • Trainer introduction (name, background, contact channel — placeholders)
+   • Icebreaker prompt: name, location, why cybersecurity, one tech skill you have
+   • Speaker notes: run the icebreaker using Google Meet chat or unmute in turns
+
+Slide 3 — What This Program Is About
+   • Show the learning objectives of this session
+   • TESDA Cyber Threat Monitoring Level I, ICT Sector
+   • Two core skills: monitor and report cyber threats; conduct vulnerability scanning
+   • Jobs: Cybersecurity Analyst (L1), Support Staff, Help Desk Staff
+
+Slide 4 — Our Learning Format: Blended Delivery
+   • Split-day graphic: MORNING = Synchronous (live) | AFTERNOON = Asynchronous (self-paced)
+   • Why blended: live guidance plus time for real hands-on practice
+
+Slide 5 — Mornings: Synchronous Sessions via Google Meet
+   • Live with trainer and classmates on Google Meet
+   • Option A: Introduce and demonstrate a new lesson
+   • Option B: Guided activity work — Q&A, review of outputs, help on difficult steps
+   • Attendance is checked here
+
+Slide 6 — Afternoons: Fully Asynchronous Activity Work
+   • Work independently on the day's Student Activities
+   • Use the Student Handout and the assets folder
+   • Complete the Self-Check and Reflection
+   • Submit outputs as instructed
+
+Slide 7 — A Typical Training Day
+   • Timeline graphic: Before session (download folder, skim handout) → Morning live session → Afternoon activities → End-of-day submission → Next-morning review
+   • Time placeholders for the trainer to fill in
+
+Slide 8 — Your Daily Learning Kit
+   • Day folder contents: Student Handout (PDF/Word), Student Activities (PDF/Word), assets folder, presentation
+   • Visual: folder icon with file icons
+
+Slide 9 — Google Meet Etiquette
+   • Join early with registered name
+   • Mute when not speaking; raise hand / chat
+   • Camera on when requested
+   • Do not record or share without permission; never share sensitive screens
+
+Slide 10 — Succeeding in Asynchronous Work
+   • Set a schedule; follow each activity's time allotment
+   • Read instructions and check required assets first
+   • Stuck? Note the step, move on, raise it next morning
+   • Your own work; group work shows each member's part
+
+Slide 11 — Submissions, Attendance and Communication
+   • How and where to submit outputs (placeholder for trainer's chosen channel)
+   • Deadlines: end of each training day (placeholder time)
+   • Official communication channel for questions (placeholder)
+
+Slide 12 — How You Will Be Assessed
+   • Competency-Based Training: Competent / Not Yet Competent
+   • Evidence: daily activity outputs, self-checks, demonstrations
+   • Final assessment: written test, demonstration with oral questioning, interview
+
+Slide 13 — The 15-Day Roadmap
+   • Days 1–4 Foundations; Days 5–10 Monitor and Report Cyber Threats; Days 11–14 Vulnerability Scanning; Day 15 Integrated Simulation and Assessment
+   • Visual: horizontal roadmap
+
+Slide 14 — Lab Rules, Ethics and Wellness
+   • Work only on authorized lab machines and files
+   • Confidentiality and Data Privacy Act
+   • Screen breaks (20-20-20 rule), posture, rest between sessions
+
+Slide 15 — Ready to Start! Today's Plan and Q&A
+   • This morning: Day 1 lesson — Orientation and Cybersecurity Foundations
+   • This afternoon: Day 1 Activities 1.1–1.4 (asynchronous)
+   • Open Q&A; quick poll: "How confident are you with computers?"
+
+OUTPUT FORMAT
+Return the deck slide by slide using this structure and create a file for powerpoint presentation that i can export:
+
+  SLIDE [n]: [Title]
+  On-slide content: ...
+  Visual: ...
+  Speaker notes: ...
+
+If your tool can generate the file directly, produce a .pptx with the
+speaker notes placed in the notes pane of each slide.

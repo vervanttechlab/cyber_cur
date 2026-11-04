@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <title><?= appTitle ?></title>
+  <style>
+    :root { --navy:#1F3864; --blue:#2E75B6; --light:#DEEAF6; --bg:#F4F6FA; --text:#262626; --muted:#6B7280;
+            --green:#548235; --amber:#BF8F00; --red:#C00000; --radius:10px; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI", Calibri, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
+    body.exam-on { user-select:none; -webkit-user-select:none; }
+    header { background:var(--navy); color:#fff; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; position:sticky; top:0; z-index:5; }
+    header h1 { font-size:18px; margin:0; font-weight:600; }
+    header .sub { font-size:12px; color:#9DC3E6; letter-spacing:.06em; text-transform:uppercase; }
+    .hdr-right { display:flex; align-items:center; gap:12px; }
+    .who { font-size:12px; color:#DDEBF7; text-align:right; line-height:1.4; }
+    .timer { font-variant-numeric:tabular-nums; font-size:22px; font-weight:700; background:rgba(255,255,255,.12); padding:6px 14px; border-radius:8px; min-width:110px; text-align:center; }
+    .timer.warn { background:var(--amber); } .timer.danger { background:var(--red); }
+    main { max-width:980px; margin:24px auto; padding:0 16px; }
+    .card { background:#fff; border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.08); padding:24px; margin-bottom:16px; }
+    h2 { color:var(--navy); margin:0 0 12px; font-size:22px; }
+    h3 { color:var(--blue); margin:20px 0 8px; font-size:16px; }
+    label { display:block; font-weight:600; margin:14px 0 6px; font-size:14px; }
+    input[type=text], input[type=email], select { width:100%; padding:10px 12px; border:1px solid #CBD5E1; border-radius:8px; font-size:15px; }
+    input:focus, select:focus { outline:2px solid var(--blue); border-color:var(--blue); }
+    #fCode, #fOtp { font-size:20px; letter-spacing:.3em; text-align:center; max-width:220px; font-weight:700; }
+    .btn { background:var(--blue); color:#fff; border:0; padding:11px 22px; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
+    .btn:hover { filter:brightness(1.08); } .btn:disabled { background:#9CA3AF; cursor:not-allowed; }
+    .btn.secondary { background:#fff; color:var(--navy); border:1px solid #CBD5E1; }
+    .btn.success { background:var(--green); }
+    .btn.flag.on { background:var(--amber); color:#fff; border-color:var(--amber); }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .spacer { flex:1; }
+    table.info { border-collapse:collapse; width:100%; font-size:14px; }
+    table.info td { border:1px solid #E5E7EB; padding:8px 10px; } table.info td:first-child { background:var(--light); font-weight:600; color:var(--navy); width:45%; }
+    ul.rules { padding-left:20px; line-height:1.6; font-size:14px; }
+    .check { display:flex; gap:10px; align-items:flex-start; font-weight:400; margin-top:16px; }
+    .alert { padding:12px 14px; border-radius:8px; font-size:14px; margin:12px 0; }
+    .alert.error { background:#FDE8E8; color:#9B1C1C; border-left:4px solid var(--red); }
+    .alert.info { background:#EAF1FB; color:var(--navy); border-left:4px solid var(--blue); }
+    .alert.warn { background:#FFF4D6; color:#7A5B00; border-left:4px solid var(--amber); }
+    .hidden { display:none !important; }
+    .layout { display:grid; grid-template-columns:1fr 250px; gap:16px; align-items:start; }
+    @media (max-width:820px) { .layout { grid-template-columns:1fr; } .nav { order:-1; } }
+    .qcard { position:relative; overflow:hidden; }
+    .wm { position:absolute; inset:0; pointer-events:none; z-index:3; opacity:.09; background-repeat:repeat; }
+    .qpart { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--blue); font-weight:700; }
+    .qnum { color:var(--muted); font-size:13px; margin:4px 0 10px; }
+    .qtext { font-size:18px; line-height:1.5; margin:0 0 18px; }
+    .choice { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border:1.5px solid #E5E7EB; border-radius:8px; margin-bottom:10px; cursor:pointer; font-size:15px; line-height:1.45; }
+    .choice:hover { border-color:var(--blue); background:#F7FAFE; }
+    .choice.sel { border-color:var(--blue); background:var(--light); }
+    .choice .letter { flex:0 0 28px; height:28px; border-radius:50%; border:1.5px solid #9CA3AF; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--muted); }
+    .choice.sel .letter { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .nav h4 { margin:0 0 10px; color:var(--navy); font-size:14px; }
+    .grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; }
+    .grid button { border:1px solid #CBD5E1; background:#fff; border-radius:6px; padding:7px 0; font-size:13px; cursor:pointer; color:var(--text); }
+    .grid button.ans { background:var(--blue); color:#fff; border-color:var(--blue); }
+    .grid button.flg { box-shadow:inset 0 -4px 0 var(--amber); }
+    .grid button.cur { outline:2px solid var(--navy); outline-offset:1px; font-weight:700; }
+    .legend { font-size:12px; color:var(--muted); margin-top:10px; line-height:1.7; }
+    .legend span { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:middle; margin-right:4px; }
+    .progress { height:8px; background:#E5E7EB; border-radius:4px; overflow:hidden; margin:8px 0 4px; }
+    .progress div { height:100%; background:var(--green); width:0; transition:width .3s; }
+    .status-line { font-size:12px; color:var(--muted); margin-top:10px; line-height:1.6; }
+    .status-line b.bad { color:var(--red); }
+    .review-list button { margin:4px; }
+    .overlay { position:fixed; inset:0; background:rgba(15,23,42,.92); display:flex; align-items:center; justify-content:center; z-index:40; padding:16px; color:#fff; text-align:center; }
+    .overlay .box { max-width:480px; }
+    .overlay h2 { color:#fff; }
+    .modal-bg { position:fixed; inset:0; background:rgba(15,23,42,.55); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px; }
+    .modal { background:#fff; border-radius:12px; padding:24px; max-width:460px; width:100%; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#111827; color:#fff; padding:12px 18px; border-radius:8px; font-size:14px; z-index:60; max-width:90%; }
+    .toast.bad { background:var(--red); }
+    .big { font-size:48px; font-weight:800; color:var(--navy); margin:8px 0; }
+    .spinner { width:22px; height:22px; border:3px solid #CBD5E1; border-top-color:var(--blue); border-radius:50%; animation:spin 1s linear infinite; display:inline-block; vertical-align:middle; margin-right:8px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    footer { text-align:center; font-size:12px; color:var(--muted); padding:16px 0 30px; }
+    @media print { body * { display:none !important; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="sub">Cyber Threat Monitoring Level I · ICT Sector</div>
+      <h1><?= appTitle ?></h1>
+    </div>
+    <div class="hdr-right">
+      <div class="who hidden" id="who"></div>
+      <div id="timer" class="timer hidden">--:--</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- LOADING -->
+    <div id="scrLoading" class="card"><span class="spinner"></span> Loading the pre-test…</div>
+
+    <!-- WELCOME / REGISTRATION -->
+    <div id="scrWelcome" class="hidden">
+      <div class="card">
+        <h2>Welcome, Trainee!</h2>
+        <p>This <b>pre-test</b> checks what you already know <b>before</b> the training starts. It is <b>not graded for passing</b>. Your results help your trainer plan the lessons. Answer honestly. If you are not sure, choose the answer you think is most likely correct.</p>
+        <table class="info" id="examInfo"></table>
+        <h3>Exam Rules and Monitoring</h3>
+        <ul class="rules">
+          <li>Closed book: no internet searching, AI tools, notes, or help from others. Keep your camera on in Google Meet.</li>
+          <li id="ruleFs">The exam runs in <b>full screen</b>. Exiting full screen is <b>recorded</b>.</li>
+          <li>Leaving this page or switching to another app/tab is <b>recorded</b> with the time you were away.</li>
+          <li id="ruleMax"></li>
+          <li>The timer is controlled by the server. It keeps running even if you close the page. When time runs out, your answers are submitted automatically.</li>
+          <li>Your answers are saved to the server as you go. If your connection drops, reopen the link <b>on the same device and browser</b> and enter the same email.</li>
+          <li id="ruleOtp">Before starting, a <b>6-digit verification code</b> is sent to your email. Keep your email open on your phone or another tab to receive it.</li>
+          <li>Only <b>one attempt</b> is allowed. Your name and email are shown on the exam screen.</li>
+        </ul>
+        <div id="closedMsg" class="alert warn hidden">The pre-test is currently <b>CLOSED</b>. Please wait for your trainer's instruction, then reload this page.</div>
+      </div>
+      <div class="card" id="regCard">
+        <h2>Trainee Information</h2>
+        <label for="fName">Full Name (Last Name, First Name M.I.)</label>
+        <input type="text" id="fName" autocomplete="name" placeholder="Dela Cruz, Juan A.">
+        <label for="fEmail">Email Address (a 6-digit verification code will be sent here)</label>
+        <input type="email" id="fEmail" autocomplete="email" placeholder="juan.delacruz@gmail.com">
+        <label for="fExp">Prior experience in IT or cybersecurity</label>
+        <select id="fExp">
+          <option value="">— Select —</option>
+          <option>None</option>
+          <option>Self-study / online courses only</option>
+          <option>IT-related work or school (non-security)</option>
+          <option>Cybersecurity-related work or training</option>
+        </select>
+        <div id="codeWrap">
+          <label for="fCode">Access Code (announced by your trainer)</label>
+          <input type="text" id="fCode" maxlength="12" autocomplete="off" placeholder="______">
+        </div>
+        <label class="check"><input type="checkbox" id="fAgree"> I will answer this pre-test honestly and on my own. I understand that my activity during the exam is monitored and recorded.</label>
+        <div id="regError" class="alert error hidden"></div>
+        <div class="row" style="margin-top:18px"><div class="spacer"></div><button class="btn" id="btnStart">Start Pre-Test</button></div>
+      </div>
+      <div class="card hidden" id="otpCard">
+        <h2>Verify Your Email</h2>
+        <p>We sent a <b>6-digit code</b> to <b id="otpTo"></b>. Check your Inbox (and the Spam or Promotions folder). The code is valid for 10 minutes.</p>
+        <label for="fOtp">Verification Code</label>
+        <input type="text" id="fOtp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="______">
+        <div id="otpError" class="alert error hidden"></div>
+        <div class="row" style="margin-top:18px">
+          <button class="btn secondary" id="btnChange">◀ Change details</button>
+          <button class="btn secondary" id="btnResend" disabled>Resend code</button>
+          <div class="spacer"></div>
+          <button class="btn" id="btnVerify">Verify &amp; Start Pre-Test</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXAM -->
+    <div id="scrExam" class="hidden">
+      <div id="resumeMsg" class="alert info hidden">Welcome back! Your exam was resumed. Your saved answers were restored and the timer continued.</div>
+      <div class="layout">
+        <div class="card qcard">
+          <div class="wm" id="wm"></div>
+          <div class="qpart" id="qPart"></div>
+          <div class="qnum" id="qNum"></div>
+          <p class="qtext" id="qText"></p>
+          <div id="qChoices"></div>
+          <div class="row" style="margin-top:18px">
+            <button class="btn secondary" id="btnPrev">◀ Previous</button>
+            <button class="btn secondary flag" id="btnFlag">⚑ Flag for review</button>
+            <div class="spacer"></div>
+            <button class="btn" id="btnNext">Next ▶</button>
+          </div>
+        </div>
+        <div class="card nav">
+          <h4>Question Navigator</h4>
+          <div class="progress"><div id="progBar"></div></div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px" id="progText"></div>
+          <div class="grid" id="navGrid"></div>
+          <div class="legend">
+            <div><span style="background:var(--blue)"></span>Answered</div>
+            <div><span style="background:#fff;border:1px solid #CBD5E1"></span>Not answered</div>
+            <div><span style="background:var(--amber)"></span>Flagged for review</div>
+          </div>
+          <div class="status-line" id="statusLine"></div>
+          <button class="btn success" style="width:100%;margin-top:14px" id="btnReview">Review &amp; Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW -->
+    <div id="scrReview" class="hidden">
+      <div class="card">
+        <h2>Review Your Answers</h2>
+        <p id="revSummary"></p>
+        <div id="revUnanswered"></div>
+        <div id="revFlagged"></div>
+        <div class="row" style="margin-top:18px">
+          <button class="btn secondary" id="btnBack">◀ Back to Questions</button>
+          <div class="spacer"></div>
+          <button class="btn success" id="btnSubmit">Submit Pre-Test</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DONE -->
+    <div id="scrDone" class="hidden">
+      <div class="card" style="text-align:center">
+        <h2>Pre-Test Submitted ✔</h2>
+        <p id="doneMsg">Thank you! Your answers have been recorded. Your trainer will discuss the results in the next synchronous session.</p>
+        <div id="doneScore" class="hidden">
+          <div class="big" id="doneTotal"></div>
+          <div id="doneLevel" style="font-weight:600;color:var(--blue)"></div>
+        </div>
+        <p style="color:var(--muted);font-size:13px;margin-top:18px">You may now close this page.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>Cyber Threat Monitoring Level I · Pre-Test · For training use only · Activity on this page is monitored</footer>
+
+  <!-- Full-screen guard -->
+  <div id="fsGuard" class="overlay hidden">
+    <div class="box">
+      <h2>Exam paused: full screen required</h2>
+      <p>You left full screen. This has been recorded.</p>
+      <p id="fsCount"></p>
+      <button class="btn" id="btnFs">Return to Full Screen</button>
+    </div>
+  </div>
+
+  <div id="modal" class="modal-bg hidden">
+    <div class="modal">
+      <h2 id="mTitle"></h2>
+      <p id="mBody"></p>
+      <div class="row"><div class="spacer"></div><button class="btn secondary" id="mCancel">Cancel</button><button class="btn success" id="mOk">Confirm</button></div>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+
+<script>
+  var S = {
+    email:'', name:'', token:'', deviceId:'', questions:[], answers:{}, flags:{}, times:{}, cur:0,
+    focus:{ losses:0, awaySec:0, fsExits:0 }, events:[], maxViolations:0, requireFs:false, fsActive:false,
+    endAt:0, timerId:null, saveId:null, saveTimer:null, saving:false, dirty:false,
+    submitting:false, inExam:false, awayAt:0, shownAt:0
+  };
+  var INFO = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var LETTERS = 'ABCD';
+  var MIN_AWAY_MS = 2000;
+
+  // ---------- utilities ----------
+  function show(id) {
+    ['scrLoading','scrWelcome','scrExam','scrReview','scrDone'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
+    window.scrollTo(0, 0);
+  }
+  function toast(msg, ms, bad) { var t = $('toast'); t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.add('hidden'); }, ms || 3500); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+  function deviceId() {
+    var id = ls('ctm_device_id');
+    if (!id) { id = 'D' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); ls('ctm_device_id', id); }
+    return id;
+  }
+  function localKey() { return 'ctm_pretest_' + S.email; }
+  function saveLocal() { ls(localKey(), JSON.stringify({ answers:S.answers, flags:S.flags, times:S.times, cur:S.cur })); }
+  function loadLocal() { try { var d = JSON.parse(ls(localKey()) || 'null'); if (d) { S.flags = d.flags || {}; S.cur = d.cur || 0; S.times = d.times || {}; } } catch (e) {} }
+  function confirmBox(title, body, okText, onOk) {
+    $('mTitle').textContent = title; $('mBody').innerHTML = body; $('mOk').textContent = okText || 'Confirm';
+    $('modal').classList.remove('hidden');
+    $('mCancel').onclick = function () { $('modal').classList.add('hidden'); };
+    $('mOk').onclick = function () { $('modal').classList.add('hidden'); onOk(); };
+  }
+  function addEvent(type, detail) { S.events.push({ at:Date.now(), type:type, detail:detail || '' }); }
+  function violations() { return S.focus.losses + S.focus.fsExits; }
+
+  // ---------- welcome ----------
+  google.script.run.withSuccessHandler(function (info) {
+    INFO = info;
+    var rows = '<tr><td>Number of items</td><td>' + info.totalItems + ' multiple-choice items (1 point each)</td></tr>' +
+               '<tr><td>Time limit</td><td>' + info.durationMin + ' minutes</td></tr>';
+    info.parts.forEach(function (p) { rows += '<tr><td>' + esc(p.name) + '</td><td>' + p.items + ' items</td></tr>'; });
+    $('examInfo').innerHTML = rows;
+    if (!info.requireFullscreen) $('ruleFs').classList.add('hidden');
+    $('ruleMax').innerHTML = info.maxViolations > 0
+      ? 'After <b>' + info.maxViolations + '</b> violations (leaving the page/app or exiting full screen), your exam is <b>submitted automatically</b>.'
+      : 'All violations are reported to your trainer.';
+    if (!info.codeRequired) $('codeWrap').classList.add('hidden');
+    if (!info.verifyEmail) $('ruleOtp').classList.add('hidden');
+    else $('btnStart').textContent = 'Send Verification Code';
+    if (!info.open) { $('closedMsg').classList.remove('hidden'); $('btnStart').disabled = true; }
+    show('scrWelcome');
+  }).withFailureHandler(function (err) {
+    $('scrLoading').innerHTML = '<div class="alert error">' + esc(err.message) + '</div>';
+  }).getExamInfo();
+
+  function startLabel() { return INFO && INFO.verifyEmail ? 'Send Verification Code' : 'Start Pre-Test'; }
+  var PENDING = null, resendTimer = null;
+
+  $('btnStart').onclick = function () {
+    var info = { name:$('fName').value.trim(), email:$('fEmail').value.trim(), experience:$('fExp').value,
+                 code:$('fCode').value.trim(), deviceId:deviceId() };
+    var e = $('regError');
+    var problem = !info.name ? 'Please enter your full name.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(info.email) ? 'Please enter a valid email address.' :
+                  !info.experience ? 'Please select your prior experience.' :
+                  (INFO.codeRequired && !info.code) ? 'Please enter the access code announced by your trainer.' :
+                  !$('fAgree').checked ? 'Please tick the honesty statement to continue.' : '';
+    if (problem) { e.textContent = problem; e.classList.remove('hidden'); return; }
+    e.classList.add('hidden');
+    if (INFO.requireFullscreen && !INFO.verifyEmail) enterFullscreen();   // must run inside the click
+    $('btnStart').disabled = true; $('btnStart').textContent = INFO.verifyEmail ? 'Sending code…' : 'Starting…';
+    PENDING = info;
+    google.script.run.withSuccessHandler(onAccess).withFailureHandler(function (err) {
+      e.textContent = err.message; e.classList.remove('hidden');
+      $('btnStart').disabled = false; $('btnStart').textContent = startLabel();
+      exitFullscreenQuietly();
+    }).requestAccess(info);
+  };
+
+  function onAccess(r) {
+    if (r.exam) { beginExam(r.exam); return; }          // no verification needed (or resuming on the same device)
+    $('regCard').classList.add('hidden');
+    $('otpCard').classList.remove('hidden');
+    $('otpTo').textContent = r.masked;
+    $('otpError').classList.add('hidden');
+    $('fOtp').value = ''; $('fOtp').focus();
+    $('btnVerify').disabled = false;
+    resendCountdown(60);
+  }
+
+  function resendCountdown(sec) {
+    clearInterval(resendTimer);
+    var b = $('btnResend'); b.disabled = true;
+    resendTimer = setInterval(function () {
+      sec--;
+      if (sec <= 0) { clearInterval(resendTimer); b.disabled = false; b.textContent = 'Resend code'; }
+      else b.textContent = 'Resend code (' + sec + ')';
+    }, 1000);
+    b.textContent = 'Resend code (' + sec + ')';
+  }
+
+  $('btnVerify').onclick = function () {
+    var otp = $('fOtp').value.replace(/\D/g, ''), e = $('otpError');
+    if (!/^\d{6}$/.test(otp)) { e.textContent = 'Please enter the 6-digit code from your email.'; e.classList.remove('hidden'); return; }
+    e.classList.add('hidden');
+    if (INFO.requireFullscreen) enterFullscreen();       // must run inside the click
+    $('btnVerify').disabled = true; $('btnVerify').textContent = 'Verifying…';
+    var info = {}; for (var k in PENDING) info[k] = PENDING[k]; info.otp = otp;
+    google.script.run.withSuccessHandler(function (r) { clearInterval(resendTimer); beginExam(r.exam); })
+      .withFailureHandler(function (err) {
+        e.textContent = err.message; e.classList.remove('hidden');
+        $('btnVerify').disabled = false; $('btnVerify').textContent = 'Verify & Start Pre-Test';
+        exitFullscreenQuietly();
+      }).verifyCode(info);
+  };
+
+  $('btnResend').onclick = function () {
+    var e = $('otpError');
+    $('btnResend').disabled = true; $('btnResend').textContent = 'Sending…';
+    google.script.run.withSuccessHandler(function (r) { onAccess(r); toast('A new code was sent. Use the newest email.'); })
+      .withFailureHandler(function (err) { e.textContent = err.message; e.classList.remove('hidden'); resendCountdown(30); })
+      .requestAccess(PENDING);
+  };
+
+  $('btnChange').onclick = function () {
+    clearInterval(resendTimer);
+    $('otpCard').classList.add('hidden'); $('regCard').classList.remove('hidden');
+    $('btnStart').disabled = false; $('btnStart').textContent = startLabel();
+  };
+
+  // ---------- exam ----------
+  function beginExam(d) {
+    S.email = d.email; S.name = d.name; S.token = d.token; S.deviceId = deviceId(); S.questions = d.questions;
+    S.answers = d.answers || {}; S.focus = d.focus || S.focus; S.maxViolations = d.maxViolations; S.requireFs = d.requireFullscreen;
+    loadLocal();
+    if (S.cur >= S.questions.length) S.cur = 0;
+    if (d.resumed) { $('resumeMsg').classList.remove('hidden'); addEvent('Page reopened (resumed)', ''); }
+    $('who').innerHTML = esc(S.name) + '<br>' + esc(S.email); $('who').classList.remove('hidden');
+    buildWatermark();
+    S.endAt = Date.now() + d.remainingSec * 1000;
+    S.inExam = true;
+    document.body.classList.add('exam-on');
+    $('timer').classList.remove('hidden');
+    tick(); S.timerId = setInterval(tick, 1000);
+    S.saveId = setInterval(function () { serverSave(); }, 30000);
+    S.fsActive = !!document.fullscreenElement;
+    if (S.requireFs && !S.fsActive) {
+      if (fullscreenSupported()) $('fsGuard').classList.remove('hidden');
+      else addEvent('Full screen not supported on this device', navigator.userAgent.slice(0, 70));
+    }
+    buildNav(); render(); show('scrExam');
+    if (d.remainingSec <= 0) submit('time');
+  }
+
+  function tick() {
+    var left = Math.max(0, Math.round((S.endAt - Date.now()) / 1000));
+    var m = Math.floor(left / 60), s = left % 60;
+    var t = $('timer'); t.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    t.classList.toggle('warn', left <= 300 && left > 60); t.classList.toggle('danger', left <= 60);
+    if (left === 300) toast('5 minutes left. Review your answers.');
+    if (left === 0 && S.inExam && !S.submitting) { toast('Time is up! Submitting your answers…', 6000); submit('time'); }
+  }
+
+  function buildNav() {
+    var g = $('navGrid'); g.innerHTML = '';
+    S.questions.forEach(function (q, i) {
+      var b = document.createElement('button'); b.textContent = q.n; b.onclick = function () { goTo(i); };
+      g.appendChild(b);
+    });
+  }
+
+  // time per question: counts only while the question is on screen and the page is in focus
+  function stopClock() {
+    if (S.shownAt && S.questions[S.cur]) {
+      var id = S.questions[S.cur].id;
+      S.times[id] = (S.times[id] || 0) + (Date.now() - S.shownAt) / 1000;
+    }
+    S.shownAt = 0;
+  }
+  function startClock() { if (S.inExam && !S.awayAt && !$('scrExam').classList.contains('hidden') && $('fsGuard').classList.contains('hidden')) S.shownAt = Date.now(); }
+
+  function goTo(i) { stopClock(); S.cur = i; show('scrExam'); render(); }
+
+  function render() {
+    var q = S.questions[S.cur];
+    $('qPart').textContent = q.partName;
+    $('qNum').textContent = 'Question ' + q.n + ' of ' + S.questions.length;
+    $('qText').textContent = q.text;
+    var box = $('qChoices'); box.innerHTML = '';
+    q.choices.forEach(function (c, k) {
+      var d = document.createElement('div');
+      d.className = 'choice' + (S.answers[q.id] === c.id ? ' sel' : '');
+      d.innerHTML = '<div class="letter">' + LETTERS[k] + '</div><div>' + esc(c.text) + '</div>';
+      d.onclick = function () { S.answers[q.id] = c.id; S.dirty = true; saveLocal(); render(); queueSave(); };
+      box.appendChild(d);
+    });
+    $('btnPrev').disabled = S.cur === 0;
+    $('btnNext').textContent = S.cur === S.questions.length - 1 ? 'Review ▶' : 'Next ▶';
+    $('btnFlag').classList.toggle('on', !!S.flags[q.id]);
+    $('btnFlag').textContent = S.flags[q.id] ? '⚑ Flagged' : '⚑ Flag for review';
+    var answered = 0;
+    Array.prototype.forEach.call($('navGrid').children, function (b, i) {
+      var qq = S.questions[i], a = S.answers[qq.id] !== undefined;
+      if (a) answered++;
+      b.className = (a ? 'ans ' : '') + (S.flags[qq.id] ? 'flg ' : '') + (i === S.cur ? 'cur' : '');
+    });
+    $('progBar').style.width = (answered / S.questions.length * 100) + '%';
+    $('progText').textContent = answered + ' of ' + S.questions.length + ' answered';
+    renderStatus();
+    saveLocal();
+    if (!S.shownAt) startClock();
+  }
+
+  function renderStatus(msg) {
+    var v = violations();
+    $('statusLine').innerHTML = 'Violations: <b class="' + (v ? 'bad' : '') + '">' + v + (S.maxViolations > 0 ? ' / ' + S.maxViolations : '') + '</b>' +
+      '<br>' + (msg || (S.dirty ? 'Saving…' : 'All answers saved to server ✔'));
+  }
+
+  $('btnPrev').onclick = function () { if (S.cur > 0) goTo(S.cur - 1); };
+  $('btnNext').onclick = function () { if (S.cur < S.questions.length - 1) goTo(S.cur + 1); else openReview(); };
+  $('btnFlag').onclick = function () { var id = S.questions[S.cur].id; S.flags[id] = !S.flags[id]; render(); };
+  $('btnReview').onclick = openReview;
+  $('btnBack').onclick = function () { goTo(S.cur); };
+
+  function jumpList(title, idxs) {
+    if (!idxs.length) return '';
+    return '<h3>' + title + ' (' + idxs.length + ')</h3><div class="review-list">' +
+      idxs.map(function (i) { return '<button class="btn secondary" onclick="goTo(' + i + ')">' + S.questions[i].n + '</button>'; }).join('') + '</div>';
+  }
+
+  function openReview() {
+    stopClock();
+    var un = [], fl = [];
+    S.questions.forEach(function (q, i) { if (S.answers[q.id] === undefined) un.push(i); if (S.flags[q.id]) fl.push(i); });
+    $('revSummary').innerHTML = 'You answered <b>' + (S.questions.length - un.length) + ' of ' + S.questions.length + '</b> questions. Click a number to go back to it.';
+    $('revUnanswered').innerHTML = jumpList('Not answered', un);
+    $('revFlagged').innerHTML = jumpList('Flagged for review', fl);
+    show('scrReview');
+  }
+
+  $('btnSubmit').onclick = function () {
+    var un = S.questions.filter(function (q) { return S.answers[q.id] === undefined; }).length;
+    confirmBox('Submit your pre-test?',
+      (un ? '<b>' + un + ' question(s) are not answered.</b> Unanswered items get 0 points.<br><br>' : '') + 'You cannot change your answers after submitting.',
+      'Submit', function () { submit('manual'); });
+  };
+
+  // ---------- server autosave ----------
+  function payload() {
+    return { email:S.email, token:S.token, deviceId:S.deviceId, answers:S.answers, times:S.times, focus:S.focus, events:S.events.slice(0, 20) };
+  }
+  function queueSave() { clearTimeout(S.saveTimer); S.saveTimer = setTimeout(serverSave, 2500); }
+  function serverSave() {
+    if (!S.inExam || S.saving || S.submitting) return;
+    var p = payload(), sent = p.events.length;
+    S.saving = true;
+    google.script.run.withSuccessHandler(function (r) {
+      S.saving = false;
+      if (!r.ok && r.expired) { S.endAt = Date.now(); tick(); return; }
+      S.events.splice(0, sent); S.dirty = false;
+      S.endAt = Date.now() + r.remainingSec * 1000;          // server is the source of truth for time
+      renderStatus();
+    }).withFailureHandler(function (err) {
+      S.saving = false;
+      renderStatus('<b class="bad">Not saved — check your connection</b>');
+      if (/another device|Invalid exam session/.test(err.message)) lockOut(err.message);
+    }).saveProgress(p);
+  }
+
+  // ---------- submit ----------
+  function submit(reason) {
+    if (S.submitting) return;
+    S.submitting = true;
+    stopClock();
+    clearTimeout(S.saveTimer);
+    $('btnSubmit').disabled = true; $('btnSubmit').innerHTML = '<span class="spinner"></span>Submitting…';
+    var p = payload(); p.reason = reason;
+    google.script.run.withSuccessHandler(function (r) {
+      endExam();
+      if (r.showScore) {
+        $('doneTotal').textContent = r.total + ' / ' + r.max + '  (' + r.pct + '%)';
+        $('doneLevel').textContent = r.level;
+        $('doneScore').classList.remove('hidden');
+      }
+      if (reason === 'time') $('doneMsg').textContent = 'Time is up. Your answers were submitted automatically and have been recorded.';
+      if (reason === 'violations') $('doneMsg').textContent = 'Your exam was submitted automatically because the maximum number of violations was reached. Your trainer has been notified.';
+      show('scrDone');
+    }).withFailureHandler(function (err) {
+      S.submitting = false;
+      $('btnSubmit').disabled = false; $('btnSubmit').textContent = 'Submit Pre-Test';
+      openReview();
+      toast('Submission failed: ' + err.message + ' — check your internet connection and click Submit again. Your answers are saved.', 9000, true);
+    }).submitExam(p);
+  }
+
+  function endExam() {
+    S.inExam = false;
+    clearInterval(S.timerId); clearInterval(S.saveId);
+    $('timer').classList.add('hidden'); $('fsGuard').classList.add('hidden');
+    document.body.classList.remove('exam-on');
+    try { localStorage.removeItem(localKey()); } catch (e) {}
+    exitFullscreenQuietly();
+  }
+
+  function lockOut(msg) {
+    endExam();
+    $('doneMsg').textContent = msg;
+    show('scrDone');
+  }
+
+  // ---------- integrity monitoring ----------
+  function leave(kind) {
+    if (!S.inExam || S.awayAt) return;
+    stopClock();
+    S.awayAt = Date.now();
+    S.awayKind = kind;
+  }
+  function comeBack() {
+    if (!S.inExam || !S.awayAt) return;
+    var ms = Date.now() - S.awayAt;
+    S.awayAt = 0;
+    startClock();
+    if (ms < MIN_AWAY_MS) return;
+    S.focus.losses++;
+    S.focus.awaySec += Math.round(ms / 1000);
+    addEvent('Left exam page (' + S.awayKind + ')', 'Away ' + Math.round(ms / 1000) + ' s');
+    afterViolation('You left the exam page for ' + Math.round(ms / 1000) + ' seconds. This has been recorded.');
+  }
+  function afterViolation(msg) {
+    renderStatus();
+    var v = violations();
+    serverSave();
+    if (S.maxViolations > 0 && v >= S.maxViolations) { toast('Maximum violations reached. Submitting your exam…', 6000, true); submit('violations'); return; }
+    toast(msg + (S.maxViolations > 0 ? ' Violation ' + v + ' of ' + S.maxViolations + '.' : ''), 5000, true);
+  }
+
+  document.addEventListener('visibilitychange', function () { if (document.hidden) leave('tab hidden'); else comeBack(); });
+  window.addEventListener('blur', function () { leave('window lost focus'); });
+  window.addEventListener('focus', comeBack);
+
+  function fullscreenSupported() { var el = document.documentElement; return !!(el.requestFullscreen || el.webkitRequestFullscreen) && document.fullscreenEnabled !== false; }
+  function enterFullscreen() {
+    var el = document.documentElement;
+    try {
+      var r = el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null;
+      if (r && r.catch) r.catch(function () {});
+    } catch (e) {}
+  }
+  function exitFullscreenQuietly() { try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {} }
+  function onFsChange() {
+    var on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    if (!S.inExam) return;
+    if (on) { S.fsActive = true; $('fsGuard').classList.add('hidden'); startClock(); return; }
+    if (!S.requireFs || S.submitting) return;
+    if (S.fsActive) {
+      S.fsActive = false;
+      S.focus.fsExits++;
+      addEvent('Exited full screen', '');
+      stopClock();
+      $('fsCount').textContent = 'Violations so far: ' + violations() + (S.maxViolations > 0 ? ' of ' + S.maxViolations : '');
+      $('fsGuard').classList.remove('hidden');
+      afterViolation('You exited full screen. This has been recorded.');
+    }
+  }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+  $('btnFs').onclick = enterFullscreen;
+
+  // deterrents: copy, print, save, view-source, devtools shortcuts, right-click
+  document.addEventListener('contextmenu', function (e) { if (S.inExam) e.preventDefault(); });
+  ['copy', 'cut', 'paste'].forEach(function (ev) { document.addEventListener(ev, function (e) { if (S.inExam) e.preventDefault(); }); });
+  document.addEventListener('keydown', function (e) {
+    if (!S.inExam) return;
+    var k = (e.key || '').toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && ['c','x','a','p','s','u','f'].indexOf(k) > -1) { e.preventDefault(); }
+    if (k === 'f12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i','j','c'].indexOf(k) > -1)) { e.preventDefault(); addEvent('Blocked shortcut', e.key); }
+  });
+  document.addEventListener('keyup', function (e) { if (S.inExam && e.key === 'PrintScreen') { addEvent('Screenshot key pressed', ''); toast('Screenshots are not allowed. This has been recorded.', 4000, true); } });
+  window.addEventListener('beforeunload', function (e) { if (S.inExam && !S.submitting) { e.preventDefault(); e.returnValue = ''; } });
+
+  // watermark with the trainee's identity (discourages sharing screenshots)
+  function buildWatermark() {
+    var text = (S.name + ' • ' + S.email).replace(/[<&>]/g, '');
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="160"><text x="10" y="100" transform="rotate(-18 210 80)" ' +
+              'font-family="Arial" font-size="15" fill="#1F3864">' + text + '</text></svg>';
+    $('wm').style.backgroundImage = 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg) + '")';
+  }
+</script>
+</body>
+</html>

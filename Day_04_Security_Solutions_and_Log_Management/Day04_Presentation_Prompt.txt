@@ -1,0 +1,122 @@
+PRESENTATION BUILD PROMPT — DAY 04
+======================================================================
+
+Copy everything below this line into your AI presentation tool (Claude, Gamma,
+Copilot in PowerPoint, Canva Magic Design, etc.).
+
+------------------------------------------------------------------------
+
+You are an expert TVET instructional designer and cybersecurity trainer.
+Build a professional, classroom-ready slide presentation for the session
+described below.
+
+SESSION DETAILS
+- Qualification : Cyber Threat Monitoring Level I (TESDA Competency Standards, ICT Sector)
+- Day           : Day 4 of a 15-day training program
+- Topic         : Security Solutions, Detection Sources and Log Management
+- Sub-topic     : Where alerts come from, how security tools classify severity, and how logs are collected and read
+- Unit          : CS-ICT251101 Monitor and Report Cyber Threats
+- Coverage      : Range of Variables: Detection alert sources and Security solutions; Required Knowledge 1.5 Sources of detection alerts, 1.6 Log and detection management, 1.8 Security solution management application, 1.9 Severity classifications
+- Audience      : Filipino TVET trainees, beginner level (senior high school
+                  graduates and career shifters). Explain jargon simply.
+- Delivery      : Blended. MORNING = synchronous session via Google Meet
+                  (lecture, live demonstration, or guided activity work).
+                  AFTERNOON = fully asynchronous; trainees work on the
+                  day's activities independently.
+
+LEARNING OBJECTIVES (show these on Slide 2)
+  1. Describe the purpose of each security solution listed in the Competency Standards (AV, firewall, WAF, IDS/IPS, DLP, EDR/MDR, NDR, SIEM, SOAR, XDR, threat intelligence, OT and IoT security).
+  2. Identify the source of a detection alert from its content.
+  3. Explain how logs are generated, collected, normalized and stored in a SIEM.
+  4. Interpret severity classifications used by security solutions.
+  5. Read firewall and Windows security logs to find suspicious patterns.
+
+HARD RULES
+1. The deck must have EXACTLY 15 slides — no more, no less. Follow the
+   slide-by-slide outline below in the same order.
+2. Maximum 5 bullet points per slide and maximum 12 words per bullet.
+3. Every slide must include:
+   a) a clear slide title,
+   b) the on-slide content (bullets, table, or diagram),
+   c) a suggested visual (icon, diagram, screenshot, or chart), and
+   d) SPEAKER NOTES of 80–150 words written in a conversational trainer
+      voice, including one check-for-understanding question where useful.
+4. Use real-world, Philippine-relevant examples where possible
+   (banks, BPOs, LGUs, schools, hospitals, e-wallets).
+5. Stay accurate: use correct terminology from NIST, MITRE ATT&CK and the
+   TESDA Competency Standards. Do not invent statistics; if a figure is
+   needed, mark it as "[verify latest figure]".
+6. Never show working malicious code, real exploit steps, or real
+   credentials. Demonstrations stay inside an isolated training lab.
+
+VISUAL DESIGN
+- Theme: clean, corporate "security operations" look.
+- Colors: navy (#1F3864) primary, blue (#2E75B6) accent, white background,
+  amber (#BF8F00) for warnings, green (#548235) for key points.
+- Fonts: Calibri / Segoe UI; titles 32–40 pt, body 20–24 pt.
+- Use icons and simple diagrams instead of dense text. 16:9 layout.
+- Footer on every slide: "Cyber Threat Monitoring Level I | Day 4" and slide number.
+
+SLIDE-BY-SLIDE OUTLINE (15 slides)
+
+Slide 1 — Title: Security Solutions, Detection Sources and Log Management
+   • Day 4 of 15
+   • Visual: layered "onion" of defenses
+
+Slide 2 — Learning Objectives
+   • The 5 objectives of the day
+
+Slide 3 — Defense in Depth
+   • Layers: perimeter, network, endpoint, application, data
+   • Each layer is an alert source
+
+Slide 4 — Endpoint Protection: AV, EDR, MDR
+   • Signature vs behavior detection
+   • Managed services
+
+Slide 5 — Network Protection: Firewall, NGFW, IDS, IPS, NDR
+   • Detect vs block
+   • Sample alert per tool
+
+Slide 6 — Application and Data Protection: WAF and DLP
+   • What WAF and DLP alerts look like
+
+Slide 7 — SIEM, SOAR, XDR and Threat Intelligence
+   • How they connect all other tools
+
+Slide 8 — Special Environments: OT/ICS/SCADA and IoT
+   • Why industrial and smart devices need different monitoring
+
+Slide 9 — Detection Alert Sources in the CS
+   • SIEM, AV, Firewall, WAF, DLP, EDR, NDR alerts — icons
+
+Slide 10 — The Log Pipeline
+   • Generate → Collect → Normalize → Correlate → Alert → Store
+
+Slide 11 — Anatomy of a Log Entry
+   • Annotated firewall line and Windows event
+
+Slide 12 — Security Management Consoles
+   • Where to find alerts, agent status, actions, logs (screenshot placeholders: Defender, Wazuh)
+
+Slide 13 — Severity Classifications
+   • Critical/High/Medium/Low/Info and vendor equivalents
+
+Slide 14 — Severity Is a Starting Point
+   • Asset criticality changes priority — example comparison
+
+Slide 15 — Activities and Wrap-up
+   • Activities 4.1–4.4 and assets
+   • Key takeaways
+   • Preview Day 5: checking for alerts
+
+OUTPUT FORMAT
+Return the deck slide by slide using this structure:
+
+  SLIDE [n]: [Title]
+  On-slide content: ...
+  Visual: ...
+  Speaker notes: ...
+
+If your tool can generate the file directly, produce a .pptx with the
+speaker notes placed in the notes pane of each slide.

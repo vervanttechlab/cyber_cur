@@ -1,0 +1,128 @@
+PRESENTATION BUILD PROMPT — DAY 01
+======================================================================
+
+Copy everything below this line into your AI presentation tool (Claude, Gamma,
+Copilot in PowerPoint, Canva Magic Design, etc.).
+
+------------------------------------------------------------------------
+
+You are an expert TVET instructional designer and cybersecurity trainer.
+Build a professional, classroom-ready slide presentation for the session
+described below.
+
+SESSION DETAILS
+- Qualification : Cyber Threat Monitoring Level I (TESDA Competency Standards, ICT Sector)
+- Day           : Day 1 of a 15-day training program
+- Topic         : Program Orientation and Cybersecurity Foundations
+- Sub-topic     : The qualification, the role of a Level I cyber threat monitor, the CIA triad, ethics and Philippine cyber laws
+- Unit          : Introduction to CS-ICT251101 and CS-ICT251102 (with Basic Competencies: workplace communication, OSH)
+- Coverage      : Qualification overview; competency-based training (CBT) process; cybersecurity fundamentals; legal and ethical responsibilities
+- Audience      : Filipino TVET trainees, beginner level (senior high school
+                  graduates and career shifters). Explain jargon simply.
+- Delivery      : Blended. MORNING = synchronous session via Google Meet
+                  (lecture, live demonstration, or guided activity work).
+                  AFTERNOON = fully asynchronous; trainees work on the
+                  day's activities independently.
+
+LEARNING OBJECTIVES (show these on Slide 2)
+  1. Describe how the program is delivered: synchronous morning sessions via Google Meet and asynchronous afternoon activity work.
+  2. Explain the structure of the Cyber Threat Monitoring Level I qualification and its two core units.
+  3. Describe the job roles and daily tasks of a Level I cybersecurity analyst in a Security Operations Center (SOC).
+  4. Explain the CIA triad (Confidentiality, Integrity, Availability) using workplace examples.
+  5. Differentiate threat, vulnerability, risk, asset and incident.
+  6. Identify the legal and ethical obligations of a cyber threat monitor under RA 10175 and RA 10173.
+  7. Apply occupational safety and health (OSH) practices for computer-based work.
+
+HARD RULES
+1. The deck must have EXACTLY 15 slides — no more, no less. Follow the
+   slide-by-slide outline below in the same order.
+2. Maximum 5 bullet points per slide and maximum 12 words per bullet.
+3. Every slide must include:
+   a) a clear slide title,
+   b) the on-slide content (bullets, table, or diagram),
+   c) a suggested visual (icon, diagram, screenshot, or chart), and
+   d) SPEAKER NOTES of 80–150 words written in a conversational trainer
+      voice, including one check-for-understanding question where useful.
+4. Use real-world, Philippine-relevant examples where possible
+   (banks, BPOs, LGUs, schools, hospitals, e-wallets).
+5. Stay accurate: use correct terminology from NIST, MITRE ATT&CK and the
+   TESDA Competency Standards. Do not invent statistics; if a figure is
+   needed, mark it as "[verify latest figure]".
+6. Never show working malicious code, real exploit steps, or real
+   credentials. Demonstrations stay inside an isolated training lab.
+
+VISUAL DESIGN
+- Theme: clean, corporate "security operations" look.
+- Colors: navy (#1F3864) primary, blue (#2E75B6) accent, white background,
+  amber (#BF8F00) for warnings, green (#548235) for key points.
+- Fonts: Calibri / Segoe UI; titles 32–40 pt, body 20–24 pt.
+- Use icons and simple diagrams instead of dense text. 16:9 layout.
+- Footer on every slide: "Cyber Threat Monitoring Level I | Day 1" and slide number.
+
+SLIDE-BY-SLIDE OUTLINE (15 slides)
+
+Slide 1 — Title: Cyber Threat Monitoring Level I — Day 1 Orientation
+   • Program title, Day 1 of 15, trainer name placeholder
+   • Tagline: "Watch. Verify. Report."
+
+Slide 2 — Learning Objectives
+   • List the 6 objectives of the day
+
+Slide 3 — Why Cybersecurity Matters in the Philippines
+   • Digital banking, e-wallets, BPO, e-government growth
+   • Common attacks: phishing, ransomware, data leaks
+   • Demand for SOC analysts
+
+Slide 4 — The Qualification at a Glance
+   • Basic, Common and Core competency groups (diagram)
+   • Core: CS-ICT251101 and CS-ICT251102
+
+Slide 5 — Core Unit 1: Monitor and Report Cyber Threats
+   • 5 elements as a process flow: Check alerts → Check security solution → Manual verification → Case follow-up → Alert reporting
+
+Slide 6 — Core Unit 2: Conduct Vulnerability Scanning
+   • 3 elements: Check schedule → Conduct scanning → Provide report
+
+Slide 7 — 15-Day Training Roadmap
+   • Timeline graphic of Days 1–15 grouped into Foundations, Threat Monitoring, Vulnerability Scanning, Assessment
+
+Slide 8 — How CBT and Assessment Work
+   • Competent / Not Yet Competent
+   • Written test, demonstration with oral questioning, interview
+
+Slide 9 — The CIA Triad
+   • Triangle diagram with one example each
+
+Slide 10 — Asset, Vulnerability, Threat, Risk
+   • Simple house analogy (house, unlocked door, burglar, chance of theft)
+
+Slide 11 — Event → Alert → Incident
+   • Funnel diagram showing how many events become alerts and few become incidents
+
+Slide 12 — Inside a Security Operations Center
+   • SOC tiers 1–3 and management
+   • Where the Level I analyst fits
+
+Slide 13 — A Day in the Life of an L1 Analyst
+   • Shift timeline from handover to shift report
+
+Slide 14 — Legal and Ethical Duties
+   • RA 10175, RA 10173, NDA/AUP
+   • Authorization first
+   • Code of ethics
+
+Slide 15 — OSH, Lab Rules and Today's Activities
+   • 20-20-20 rule, workstation setup
+   • Lab rules
+   • Preview of Activities 1.1–1.4 and self-check
+
+OUTPUT FORMAT
+Return the deck slide by slide using this structure:
+
+  SLIDE [n]: [Title]
+  On-slide content: ...
+  Visual: ...
+  Speaker notes: ...
+
+If your tool can generate the file directly, produce a .pptx with the
+speaker notes placed in the notes pane of each slide.

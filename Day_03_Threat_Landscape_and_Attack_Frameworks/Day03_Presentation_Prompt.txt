@@ -1,0 +1,121 @@
+PRESENTATION BUILD PROMPT — DAY 03
+======================================================================
+
+Copy everything below this line into your AI presentation tool (Claude, Gamma,
+Copilot in PowerPoint, Canva Magic Design, etc.).
+
+------------------------------------------------------------------------
+
+You are an expert TVET instructional designer and cybersecurity trainer.
+Build a professional, classroom-ready slide presentation for the session
+described below.
+
+SESSION DETAILS
+- Qualification : Cyber Threat Monitoring Level I (TESDA Competency Standards, ICT Sector)
+- Day           : Day 3 of a 15-day training program
+- Topic         : The Cyber Threat Landscape and Attack Frameworks
+- Sub-topic     : Malicious software behaviors, threat actors, the Cyber Kill Chain and MITRE ATT&CK
+- Unit          : CS-ICT251101 Monitor and Report Cyber Threats
+- Coverage      : Required Knowledge 1.10 / 5.1 Malicious software behaviors; 5.2 Threats; 1.11 / 5.3 Knowledge of attack frameworks
+- Audience      : Filipino TVET trainees, beginner level (senior high school
+                  graduates and career shifters). Explain jargon simply.
+- Delivery      : Blended. MORNING = synchronous session via Google Meet
+                  (lecture, live demonstration, or guided activity work).
+                  AFTERNOON = fully asynchronous; trainees work on the
+                  day's activities independently.
+
+LEARNING OBJECTIVES (show these on Slide 2)
+  1. Identify common types of malware and describe their typical behaviors.
+  2. Describe the main categories of threat actors and their motives.
+  3. Explain the seven phases of the Cyber Kill Chain.
+  4. Navigate MITRE ATT&CK tactics and map observed behavior to a tactic and technique.
+  5. Recognize indicators of compromise (IOCs) and indicators of attack (IOAs).
+
+HARD RULES
+1. The deck must have EXACTLY 15 slides — no more, no less. Follow the
+   slide-by-slide outline below in the same order.
+2. Maximum 5 bullet points per slide and maximum 12 words per bullet.
+3. Every slide must include:
+   a) a clear slide title,
+   b) the on-slide content (bullets, table, or diagram),
+   c) a suggested visual (icon, diagram, screenshot, or chart), and
+   d) SPEAKER NOTES of 80–150 words written in a conversational trainer
+      voice, including one check-for-understanding question where useful.
+4. Use real-world, Philippine-relevant examples where possible
+   (banks, BPOs, LGUs, schools, hospitals, e-wallets).
+5. Stay accurate: use correct terminology from NIST, MITRE ATT&CK and the
+   TESDA Competency Standards. Do not invent statistics; if a figure is
+   needed, mark it as "[verify latest figure]".
+6. Never show working malicious code, real exploit steps, or real
+   credentials. Demonstrations stay inside an isolated training lab.
+
+VISUAL DESIGN
+- Theme: clean, corporate "security operations" look.
+- Colors: navy (#1F3864) primary, blue (#2E75B6) accent, white background,
+  amber (#BF8F00) for warnings, green (#548235) for key points.
+- Fonts: Calibri / Segoe UI; titles 32–40 pt, body 20–24 pt.
+- Use icons and simple diagrams instead of dense text. 16:9 layout.
+- Footer on every slide: "Cyber Threat Monitoring Level I | Day 3" and slide number.
+
+SLIDE-BY-SLIDE OUTLINE (15 slides)
+
+Slide 1 — Title: The Cyber Threat Landscape and Attack Frameworks
+   • Day 3 of 15
+   • Visual: world map of threat actors (stylized)
+
+Slide 2 — Learning Objectives
+   • The 5 objectives of the day
+
+Slide 3 — What Is Malware?
+   • Definition
+   • You see behaviors, not the malware itself
+
+Slide 4 — Malware Types (Part 1)
+   • Virus, worm, Trojan, ransomware, spyware — one icon and behavior each
+
+Slide 5 — Malware Types (Part 2)
+   • Backdoor/RAT, botnet, cryptominer, fileless, rootkit
+
+Slide 6 — What Malware Does After Landing
+   • Persistence, privilege escalation, defense evasion, credential access, discovery, lateral movement, C2, exfiltration/impact
+
+Slide 7 — Who Attacks and Why
+   • Threat actor table: cybercriminals, APTs, hacktivists, insiders, script kiddies
+
+Slide 8 — How Attackers Get In
+   • Phishing, unpatched systems, weak passwords, USB, supply chain
+
+Slide 9 — The Cyber Kill Chain
+   • Seven-phase horizontal diagram
+
+Slide 10 — Detecting Each Kill Chain Phase
+   • Table: phase vs what defenders can detect
+
+Slide 11 — Introduction to MITRE ATT&CK
+   • Tactics vs techniques; technique ID example T1059.001
+
+Slide 12 — The 14 ATT&CK Tactics
+   • Matrix-style graphic with one example technique each
+
+Slide 13 — IOCs vs IOAs
+   • Definitions and examples
+   • Why behaviors are more durable
+
+Slide 14 — Connecting to Your Job
+   • Reporting by exploitation/installation, lateral movement, ingress/egress (Element 5)
+
+Slide 15 — Activities and Wrap-up
+   • Activities 3.1–3.4
+   • Key takeaways
+   • Preview Day 4: detection sources and security solutions
+
+OUTPUT FORMAT
+Return the deck slide by slide using this structure:
+
+  SLIDE [n]: [Title]
+  On-slide content: ...
+  Visual: ...
+  Speaker notes: ...
+
+If your tool can generate the file directly, produce a .pptx with the
+speaker notes placed in the notes pane of each slide.
