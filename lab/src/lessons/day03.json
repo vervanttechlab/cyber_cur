@@ -1,0 +1,65 @@
+{
+ "day": 3,
+ "title": "The Cyber Threat Landscape and Attack Frameworks",
+ "unit": "CS-ICT251101 Monitor and Report Cyber Threats",
+ "parts": [
+  {
+   "h": "Learning Objectives",
+   "html": "<p>At the end of this session, you should be able to:</p><ol><li>Identify common types of malware and describe their typical behaviors.</li><li>Describe the main categories of threat actors and their motives.</li><li>Explain the seven phases of the Cyber Kill Chain.</li><li>Navigate MITRE ATT&amp;CK tactics and map observed behavior to a tactic and technique.</li><li>Recognize indicators of compromise (IOCs) and indicators of attack (IOAs).</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "1. Malicious Software (Malware) and Its Behaviors",
+   "html": "<p>Malware is software designed to harm, steal or gain unauthorized control. As a monitor, you rarely see the malware itself — you see its <b>behavior</b> in alerts and logs. Learning the behaviors helps you judge how serious an alert is.</p><table><tr><th><b>Type</b></th><th><b>What It Does</b></th><th><b>Behaviors You May See in Alerts/Logs</b></th></tr><tr><td><b>Virus</b></td><td>Attaches to files and spreads when they are run</td><td>Many modified executables; AV detections on shared files</td></tr><tr><td><b>Worm</b></td><td>Spreads by itself across the network</td><td>One host connecting to many hosts on SMB (445)/RDP; sudden traffic spike</td></tr><tr><td><b>Trojan</b></td><td>Pretends to be legitimate software</td><td>User runs \"invoice.exe\"; new unknown process starts at boot</td></tr><tr><td><b>Ransomware</b></td><td>Encrypts files and demands payment</td><td>Mass file renames (e.g., .locked), shadow copy deletion (vssadmin delete shadows), ransom note files</td></tr><tr><td><b>Spyware / Infostealer</b></td><td>Steals passwords, cookies, keystrokes</td><td>Access to browser credential files; uploads to unknown sites</td></tr><tr><td><b>Backdoor / RAT</b></td><td>Gives the attacker remote control</td><td>Regular outbound \"beacon\" connections at fixed intervals</td></tr><tr><td><b>Botnet agent</b></td><td>Makes the host part of an attacker-controlled network</td><td>Connections to command-and-control (C2) servers; spam or DDoS traffic</td></tr><tr><td><b>Cryptominer</b></td><td>Uses the host CPU to mine cryptocurrency</td><td>Constant high CPU; connections to mining pools</td></tr><tr><td><b>Fileless malware</b></td><td>Runs in memory using built-in tools (PowerShell, WMI)</td><td>Encoded PowerShell commands; Office app spawning a script engine</td></tr><tr><td><b>Rootkit</b></td><td>Hides itself and other malware deep in the OS</td><td>Security tool disabled or tampered; drivers loaded unexpectedly</td></tr></table><h3>Common Behaviors (What Malware Does After Landing)</h3><ul><li><b>Persistence</b> — survives reboot via Run registry keys, scheduled tasks, services or startup folders.</li><li><b>Privilege escalation</b> — tries to become Administrator/root.</li><li><b>Defense evasion</b> — disables antivirus, clears logs, uses encoded commands.</li><li><b>Credential access</b> — dumps passwords from memory (e.g., LSASS).</li><li><b>Discovery</b> — runs whoami, net user, ipconfig to learn about the environment.</li><li><b>Lateral movement</b> — moves to other hosts using stolen credentials, SMB, RDP or PsExec.</li><li><b>Command and control (C2)</b> — contacts the attacker's server for instructions.</li><li><b>Exfiltration / Impact</b> — steals data or encrypts/destroys it.</li></ul>",
+   "videos": [
+    "Day03_Demo1_Malware_Behavior.mp4"
+   ]
+  },
+  {
+   "h": "2. Threat Actors",
+   "html": "<table><tr><th><b>Actor</b></th><th><b>Motive</b></th><th><b>Example</b></th></tr><tr><td>Cybercriminals</td><td>Money</td><td>Ransomware gangs, e-wallet phishing syndicates</td></tr><tr><td>Nation-state / APT groups</td><td>Espionage, disruption</td><td>Long-term intrusions into government agencies</td></tr><tr><td>Hacktivists</td><td>Political or social message</td><td>Website defacements, DDoS on government sites</td></tr><tr><td>Insiders</td><td>Revenge, money, carelessness</td><td>Employee leaking customer data</td></tr><tr><td>Script kiddies</td><td>Fun, reputation</td><td>Running downloaded tools against random sites</td></tr></table><h3>Common Initial Access Methods</h3><ul><li>Phishing emails with malicious links or attachments</li><li>Exploiting unpatched internet-facing systems (VPN, web servers)</li><li>Stolen or weak passwords, especially on RDP/VPN</li><li>Malicious USB drives and pirated software</li><li>Compromised suppliers or third-party software</li></ul>",
+   "videos": []
+  },
+  {
+   "h": "3. The Cyber Kill Chain",
+   "html": "<p>The <b>Cyber Kill Chain</b> (Lockheed Martin) describes an attack as seven phases. Detecting and stopping an attack at an early phase reduces damage.</p><table><tr><th><b>#</b></th><th><b>Phase</b></th><th><b>Attacker Activity</b></th><th><b>What Defenders May Detect</b></th></tr><tr><td>1</td><td>Reconnaissance</td><td>Researches targets, scans for open ports</td><td>Port scans, web vulnerability scanner hits</td></tr><tr><td>2</td><td>Weaponization</td><td>Builds malware + exploit (e.g., macro document)</td><td>Usually not visible to the victim</td></tr><tr><td>3</td><td>Delivery</td><td>Sends phishing email, malicious link, USB</td><td>Email gateway alerts, blocked attachments</td></tr><tr><td>4</td><td>Exploitation</td><td>Triggers the vulnerability or tricks the user</td><td>Office spawning PowerShell, exploit alerts</td></tr><tr><td>5</td><td>Installation</td><td>Installs malware and persistence</td><td>New services, scheduled tasks, Run keys</td></tr><tr><td>6</td><td>Command &amp; Control</td><td>Malware contacts attacker server</td><td>Beaconing, connections to known-bad IPs/domains</td></tr><tr><td>7</td><td>Actions on Objectives</td><td>Steals, encrypts, destroys data</td><td>Large outbound transfers, mass file encryption</td></tr></table><div class=\"box\"><b>KEY POINT</b><br>The Competency Standards require you to report threats based on <b>exploitation activity and installation behavior</b> (phases 4–5), <b>spread and lateral movement</b>, and <b>egress and ingress</b> traffic. The Kill Chain helps you describe where the attack is.</div>",
+   "videos": [
+    "Day03_Demo2_Kill_Chain_Mapping.mp4"
+   ]
+  },
+  {
+   "h": "4. MITRE ATT&CK Framework",
+   "html": "<p><b>MITRE ATT&amp;CK</b> is a free, global knowledge base of attacker <b>tactics</b> (the \"why\" — the goal) and <b>techniques</b> (the \"how\"). Each technique has an ID such as <b>T1059.001</b> (Command and Scripting Interpreter: PowerShell). SOC tools and reports use ATT&amp;CK IDs as a common language.</p><table><tr><th><b>Tactic (Enterprise)</b></th><th><b>Goal</b></th><th><b>Example Technique</b></th></tr><tr><td>Reconnaissance</td><td>Gather information</td><td>T1595 Active Scanning</td></tr><tr><td>Resource Development</td><td>Prepare infrastructure</td><td>T1583 Acquire Infrastructure</td></tr><tr><td>Initial Access</td><td>Get in</td><td>T1566 Phishing</td></tr><tr><td>Execution</td><td>Run code</td><td>T1059 Command and Scripting Interpreter</td></tr><tr><td>Persistence</td><td>Stay in</td><td>T1547 Boot or Logon Autostart Execution</td></tr><tr><td>Privilege Escalation</td><td>Get higher rights</td><td>T1068 Exploitation for Privilege Escalation</td></tr><tr><td>Defense Evasion</td><td>Avoid detection</td><td>T1562 Impair Defenses</td></tr><tr><td>Credential Access</td><td>Steal credentials</td><td>T1003 OS Credential Dumping</td></tr><tr><td>Discovery</td><td>Learn the environment</td><td>T1087 Account Discovery</td></tr><tr><td>Lateral Movement</td><td>Move to other systems</td><td>T1021 Remote Services</td></tr><tr><td>Collection</td><td>Gather target data</td><td>T1005 Data from Local System</td></tr><tr><td>Command and Control</td><td>Communicate with victim</td><td>T1071 Application Layer Protocol</td></tr><tr><td>Exfiltration</td><td>Steal data</td><td>T1041 Exfiltration Over C2 Channel</td></tr><tr><td>Impact</td><td>Disrupt / destroy</td><td>T1486 Data Encrypted for Impact</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "5. Indicators",
+   "html": "<ul><li><b>IOC (Indicator of Compromise)</b> — evidence that something bad already happened: a malicious file hash, a known C2 IP or domain, a ransom note file.</li><li><b>IOA (Indicator of Attack)</b> — behavior showing an attack in progress: Word launching PowerShell, many failed logins followed by success, shadow copy deletion.</li><li>IOCs change easily (attackers change IPs); IOAs (behaviors) are harder for attackers to change.</li></ul>",
+   "videos": [
+    "Day03_Demo3_IOC_IOA_and_ATTACK.mp4"
+   ]
+  },
+  {
+   "h": "Key Terms",
+   "html": "<table><tr><th><b>Term</b></th><th><b>Meaning</b></th></tr><tr><td>Malware</td><td>Software designed to harm, steal or gain unauthorized control</td></tr><tr><td>C2</td><td>Command and control — attacker infrastructure that sends instructions to malware</td></tr><tr><td>Persistence</td><td>Technique that lets malware survive a reboot</td></tr><tr><td>Lateral movement</td><td>Moving from one compromised host to others in the network</td></tr><tr><td>Tactic / Technique</td><td>ATT&amp;CK terms: the attacker's goal / the method used to achieve it</td></tr><tr><td>IOC / IOA</td><td>Evidence of compromise / behavior of an attack in progress</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "References",
+   "html": "<ul><li>TESDA Competency Standards — Cyber Threat Monitoring Level I (ICT Sector), units CS-ICT251101 and CS-ICT251102.</li><li>NIST SP 800-115, Technical Guide to Information Security Testing and Assessment (Chapter 4).</li><li>NIST SP 800-61 Rev. 2/Rev. 3, Computer Security Incident Handling Guide.</li><li>MITRE ATT&amp;CK® Framework — attack.mitre.org; Lockheed Martin Cyber Kill Chain®.</li><li>Republic Act No. 10175 (Cybercrime Prevention Act of 2012) and Republic Act No. 10173 (Data Privacy Act of 2012).</li></ul>",
+   "videos": []
+  }
+ ],
+ "files": [
+  {
+   "name": "Day 3 Student Handout",
+   "href": "days/Day03_Student_Handout.pdf",
+   "size": "211 KB"
+  },
+  {
+   "name": "Day 3 Student Activities",
+   "href": "days/Day03_Student_Activities.pdf",
+   "size": "381 KB"
+  }
+ ]
+}

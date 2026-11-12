@@ -1,0 +1,52 @@
+{
+  "name": "ctm-virtual-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CTM Level I Virtual Lab: simulated Windows and Ubuntu lab hosts for Cyber Threat Monitoring Level I trainees",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "answer-key": "node tools/answer-key.mjs",
+    "electron": "electron .",
+    "dist:win": "npm run build && electron-builder --win portable",
+    "prebuild": "node tools/copy-videos.mjs && node tools/extract-docx.mjs && node tools/lessons.mjs",
+    "predev": "node tools/copy-videos.mjs && node tools/extract-docx.mjs && node tools/lessons.mjs",
+    "sync:dev": "node tools/sync-dev-server.mjs 4180",
+    "publish:web": "npm test && npx playwright test && npm run build && node tools/publish-web.mjs"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6",
+    "electron": "^41.7.1",
+    "electron-builder": "^26.18.0",
+    "jszip": "^3.10.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^4.1.12"
+  },
+  "build": {
+    "appId": "ph.ctm.virtuallab",
+    "productName": "CTM Virtual Lab",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "electron/**",
+      "package.json"
+    ],
+    "win": {
+      "target": "portable",
+      "artifactName": "CTM_Virtual_Lab_${version}_portable.exe"
+    },
+    "asar": true
+  }
+}

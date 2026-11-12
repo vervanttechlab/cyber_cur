@@ -1,0 +1,60 @@
+{
+ "day": 9,
+ "title": "Case Follow-up and Escalation",
+ "unit": "CS-ICT251101 Monitor and Report Cyber Threats",
+ "parts": [
+  {
+   "h": "Learning Objectives",
+   "html": "<p>At the end of this session, you should be able to:</p><ol><li>Verify the results of a scan with the customer, client or stakeholder, in plain language (PC 4.1).</li><li>Check security solution scan logs for failed actions as per SOP (PC 4.2).</li><li>Escalate a failed action to the appropriate authority as per SOP (PC 4.3).</li><li>Write a complete escalation record and follow up when there is no response.</li><li>Protect personal data and credentials while communicating with stakeholders.</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "1. A Case Is Not Finished Until …",
+   "html": "<p>… the person who owns the computer confirms the problem is gone, or someone with the authority to fix it has taken it over. Element 4 of the Competency Standards covers this follow-up: verify the results with the stakeholder, check the scan logs for failed actions, and escalate the failures. In the lab you follow SOC-SOP-05 Case Follow-up and Escalation (~/day9/soc_followup_sop.txt).</p>",
+   "videos": []
+  },
+  {
+   "h": "2. Verify the Results with the Stakeholder (PC 4.1)",
+   "html": "<p>The stakeholder is the customer, client or employee responsible for the affected computer. Find them in the directory and call the directory number (never a number from a suspicious message).</p><table><tr><th><b>Step</b></th><th><b>What</b></th><th><b>Example</b></th></tr><tr><td><b>Tell</b></td><td>What was found, what the security solution did, what they must do now</td><td>\"We found a trojan in payslip_viewer.exe. The antivirus quarantined it. Please restart your laptop.\"</td></tr><tr><td><b>Ask</b></td><td>Are the symptoms gone? Anything unusual?</td><td>\"Do you still see pop-ups or slow performance?\"</td></tr><tr><td><b>Record</b></td><td>Who confirmed, when, and what they said</td><td>\"Maria Reyes confirmed at 13:05: laptop normal.\"</td></tr></table><table><tr><th><b>Reply</b></th><th><b>Next Step (F1.4)</b></th></tr><tr><td>Confirmed resolved</td><td>Close the case and record the confirmation</td></tr><tr><td>Symptoms remain</td><td>Re-open the case and re-check the host (Day 8)</td></tr><tr><td>No reply</td><td>Try again after 2 hours; after 2 tries, email the stakeholder's supervisor</td></tr></table><div class=\"box\"><b>NOTE — Talking to stakeholders</b><br>Use plain words, not event IDs. Never send or ask for passwords. Share only what the stakeholder needs: a payroll officer does not need the details of another employee's infection (Data Privacy Act, RA 10173).</div>",
+   "videos": [
+    "Day09_Demo1_Verify_with_Stakeholder.mp4"
+   ]
+  },
+  {
+   "h": "3. Check the Scan Logs for Failed Actions (PC 4.2)",
+   "html": "<table><tr><th><b>Event ID</b></th><th><b>Failed Action</b></th><th><b>Example Cause</b></th></tr><tr><td><b>1118</b></td><td>Remediation action failed (non-critical)</td><td>File in use by another process</td></tr><tr><td><b>1119</b></td><td>Remediation action failed (critical)</td><td>Access denied</td></tr><tr><td><b>1002</b></td><td>Scan stopped before it finished</td><td>The user restarted the PC</td></tr><tr><td><b>1005</b></td><td>Scan failed</td><td>Engine error</td></tr><tr><td><b>2001</b></td><td>Security intelligence update failed</td><td>Connection timed out</td></tr></table><p>Not failures: 1000 scan started, 1001 scan finished, 1116 detected, 1117 action taken, 2000 update succeeded. In the lab: grep -E \",(1118|1119|1002|1005|2001),\" ~/day9/scan_logs.csv</p>",
+   "videos": [
+    "Day09_Demo2_Find_Failed_Actions.mp4"
+   ]
+  },
+  {
+   "h": "4. Escalate to the Appropriate Authority (PC 4.3)",
+   "html": "<p>The Competency Standards list four appropriate authorities. SOC-SOP-05 says which one receives each failed action. Check the rules in order; the FIRST rule that matches decides.</p><table><tr><th><b>Rule</b></th><th><b>When</b></th><th><b>Escalate To</b></th><th><b>Response Target</b></th></tr><tr><td><b>E1</b></td><td>Ransomware or confirmed data loss affecting a Tier 1 asset</td><td>Chief Information Security Officer (CISO)</td><td>15 min</td></tr><tr><td><b>E2</b></td><td>Any other failed action on a red flag or on a Tier 1 asset</td><td>Information Security Manager</td><td>30 min</td></tr><tr><td><b>E3</b></td><td>The security solution itself failed (1005, 2001)</td><td>Security solution vendor (copy the IT Department Manager)</td><td>Next business day</td></tr><tr><td><b>E4</b></td><td>Any other failed action on a business computer</td><td>IT Department Manager</td><td>2 hours</td></tr></table><div class=\"box\"><b>TIP — Order matters</b><br>FIN-PC-03 is only a Tier 2 workstation, but its ransomware encrypted the Tier 1 FS-01 Finance share, so rule E1 applies (CISO), not E2. A stopped scan is normally E4, but on ENG-PC-11, the source of Day 5's PE infection, it is E2.</div><h3>The Escalation Record</h3><ul><li>Phone first, then the escalation record by email (~/day9/escalation_template.txt)</li><li>Ticket, escalated to, rule, time called, host and tier, what failed (event ID and detail)</li><li>Impact (what is still at risk) and what you need from them (a decision or an action)</li><li>Response target and the time you will follow up if there is no answer</li></ul>",
+   "videos": [
+    "Day09_Demo3_Escalate.mp4"
+   ]
+  },
+  {
+   "h": "Key Terms",
+   "html": "<table><tr><th><b>Term</b></th><th><b>Meaning</b></th></tr><tr><td>Stakeholder</td><td>The customer, client or employee responsible for the affected system</td></tr><tr><td>Case follow-up</td><td>Checking that the case really ended well, or handing it to someone who can finish it</td></tr><tr><td>Failed action</td><td>A remediation, scan or update that did not complete</td></tr><tr><td>Escalation</td><td>Passing a problem to a person with more authority or expertise, with all the facts</td></tr><tr><td>Appropriate authority</td><td>The role the SOP names for a type of problem (IT manager, information security manager, vendor, CISO)</td></tr><tr><td>CISO</td><td>Chief Information Security Officer: the executive responsible for information security</td></tr><tr><td>Response target</td><td>How quickly the authority is expected to respond</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "References",
+   "html": "<ul><li>TESDA Competency Standards — Cyber Threat Monitoring Level I (ICT Sector), unit CS-ICT251101, Element 4 and Range of Variables 7.</li><li>NIST SP 800-61 Rev. 3, Incident Response Recommendations and Considerations for Cybersecurity Risk Management (communication and escalation).</li><li>Microsoft Learn — Microsoft Defender Antivirus event IDs (1000–1119, 2000, 2001).</li><li>Republic Act No. 10173 (Data Privacy Act of 2012) and NPC Circular 2016-03 (personal data breach management).</li></ul>",
+   "videos": []
+  }
+ ],
+ "files": [
+  {
+   "name": "Day 9 Student Handout",
+   "href": "days/Day09_Student_Handout.pdf",
+   "size": "303 KB"
+  },
+  {
+   "name": "Day 9 Student Activities",
+   "href": "days/Day09_Student_Activities.pdf",
+   "size": "382 KB"
+  }
+ ]
+}

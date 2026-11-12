@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CTM Virtual Lab</title>
+  <meta name="theme-color" content="#1F3864" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231F3864'/%3E%3Ctext x='5' y='22' font-family='Consolas,monospace' font-size='15' font-weight='bold' fill='%23F2C14E'%3E%3E_%3C/text%3E%3C/svg%3E">
+  <meta name="description" content="Simulated Windows and Ubuntu lab hosts for Cyber Threat Monitoring Level I practice. Training data only." />
+  <script>try { var t = localStorage.getItem('ctm-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) { /* storage blocked */ }</script>
+</head>
+<body>
+  <header class="titlebar">
+    <a class="tb-btn tb-back" id="tb-back" href="#/" hidden><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span id="tb-back-l"></span></a>
+    <a class="tb-btn brand" href="#/" title="Home"><span class="brand-mark" aria-hidden="true">&gt;_</span><span class="brand-t">CTM LAB</span></a>
+    <nav class="crumbs" id="crumbs" aria-label="You are here"></nav>
+    <span class="tb-flag" title="Everything in this lab is simulated. Nothing touches your computer or a real network.">LAB ONLY · TRAINING DATA</span>
+    <span id="sync" class="sync-chip off"></span>
+    <button class="tb-btn" id="btn-social" hidden>👥 Team</button>
+    <div class="tb-user" id="who"></div>
+    <button class="tb-btn" id="btn-menu" aria-haspopup="dialog" title="Account, notebook export, theme"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.6"/></svg><span class="sr">Menu</span></button>
+  </header>
+  <div class="layout">
+    <nav class="sidenav" id="sidenav" aria-label="Lab sections"></nav>
+    <main class="page" id="view"></main>
+    <main class="work" id="work" hidden>
+      <div class="workhead" id="mission-head"></div>
+      <div class="seg" id="seg" role="tablist" aria-label="Show">
+        <button role="tab" data-p="steps">Steps</button><button role="tab" data-p="term" class="on">Terminal</button><button role="tab" data-p="nb">Notebook</button>
+      </div>
+      <div class="panes" id="panes" data-show="term">
+        <aside class="pane p-steps" id="missions" aria-label="Steps"></aside>
+        <section class="pane p-term">
+          <div class="tabs" id="host-tabs" role="tablist"></div>
+          <div class="terms" id="terms"></div>
+          <div class="term-tools">
+            <button class="btn small" id="btn-pin-last">📌 Pin last output</button>
+            <button class="btn small quiet" id="btn-pin-sel">📌 Pin selection</button>
+            <span class="tip">Tab completes names · ↑ ↓ history · Ctrl+Shift+C copies · type <code>help</code> for commands</span>
+          </div>
+        </section>
+        <aside class="pane p-nb notebook" id="notebook" aria-label="Lab Notebook">
+          <div class="nb-tabs" id="nb-tabs" role="tablist"></div>
+          <div class="nb-body" id="nb-body"></div>
+        </aside>
+      </div>
+      <div class="watch" id="watch" hidden></div>
+      <footer class="statusbar" id="statusbar">
+        <span class="sb-left" id="sb-left">Ready</span>
+        <span class="grow"></span>
+        <button class="btn quiet hide-sm" id="btn-print" title="Open a printable copy (Save as PDF)">Print / PDF</button>
+        <button class="btn" id="btn-export" title="Download your Lab Notebook as a Word file">Export notebook</button>
+        <button class="btn" id="btn-check">Check my answers</button>
+        <button class="btn primary" id="btn-submit" hidden title="Turn in this activity to your trainer">Submit</button>
+      </footer>
+    </main>
+  </div>
+  <nav class="bottomnav" id="bottomnav" aria-label="Lab sections"></nav>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="signin"></dialog>
+  <dialog id="video-dlg"></dialog>
+  <dialog id="report-dlg"></dialog>
+  <dialog id="menu-dlg" class="menu"></dialog>
+  <dialog id="submit-dlg" class="sdlg"></dialog>
+  <dialog id="board-dlg" class="bdlg"></dialog>
+  <aside id="social" class="social" hidden aria-label="Who is online and team chat"></aside>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

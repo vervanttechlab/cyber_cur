@@ -1,0 +1,62 @@
+{
+ "day": 4,
+ "title": "Security Solutions, Detection Sources and Log Management",
+ "unit": "CS-ICT251101 Monitor and Report Cyber Threats",
+ "parts": [
+  {
+   "h": "Learning Objectives",
+   "html": "<p>At the end of this session, you should be able to:</p><ol><li>Describe the purpose of each security solution listed in the Competency Standards (AV, firewall, WAF, IDS/IPS, DLP, EDR/MDR, NDR, SIEM, SOAR, XDR, threat intelligence, OT and IoT security).</li><li>Identify the source of a detection alert from its content.</li><li>Explain how logs are generated, collected, normalized and stored in a SIEM.</li><li>Interpret severity classifications used by security solutions.</li><li>Read firewall and Windows security logs to find suspicious patterns.</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "1. Layers of Defense",
+   "html": "<p>Organizations use <b>defense in depth</b> — several security layers so that if one fails, another detects or stops the threat. Each layer is a potential <b>source of detection alerts</b> that you will monitor.</p><table><tr><th><b>Security Solution</b></th><th><b>What It Protects / Does</b></th><th><b>Typical Alert</b></th></tr><tr><td><b>Anti-virus (AV)</b></td><td>Scans files on endpoints for known malware signatures and heuristics</td><td>\"Trojan:Win32/Agent detected — quarantined\"</td></tr><tr><td><b>Common firewall</b></td><td>Allows/blocks traffic by IP, port, protocol</td><td>\"Denied inbound TCP 3389 from 192.0.2.8\"</td></tr><tr><td><b>NGFW</b></td><td>Next-generation firewall: firewall + application awareness + IPS</td><td>\"Blocked: known C2 application traffic\"</td></tr><tr><td><b>WAF</b></td><td>Web Application Firewall — protects websites from SQL injection, XSS, etc.</td><td>\"SQL injection attempt blocked on /login.php\"</td></tr><tr><td><b>IDS</b></td><td>Intrusion Detection System — watches traffic and alerts (does not block)</td><td>\"ET SCAN Nmap scan detected\"</td></tr><tr><td><b>IPS</b></td><td>Intrusion Prevention System — detects and blocks in-line</td><td>\"Exploit attempt dropped\"</td></tr><tr><td><b>DLP</b></td><td>Data Loss Prevention — stops sensitive data leaving the organization</td><td>\"File with 200 credit card numbers sent to Gmail\"</td></tr><tr><td><b>EDR</b></td><td>Endpoint Detection and Response — records endpoint behavior and can isolate hosts</td><td>\"Suspicious PowerShell spawned by Word\"</td></tr><tr><td><b>MDR</b></td><td>Managed Detection and Response — EDR/XDR operated by an outside provider</td><td>Provider escalation email/call</td></tr><tr><td><b>NDR</b></td><td>Network Detection and Response — analyzes network traffic behavior</td><td>\"Beaconing to rare external domain\"</td></tr><tr><td><b>TDR</b></td><td>Threat Detection and Response — platform detecting and responding across sources</td><td>Correlated threat case</td></tr><tr><td><b>SIEM</b></td><td>Security Information and Event Management — collects and correlates logs from everything</td><td>\"Brute force followed by successful login\"</td></tr><tr><td><b>SOAR</b></td><td>Security Orchestration, Automation and Response — automates playbooks</td><td>\"Playbook: phishing — URL blocked, ticket created\"</td></tr><tr><td><b>XDR</b></td><td>Extended Detection and Response — combines endpoint, network, email, cloud data</td><td>Multi-stage incident</td></tr><tr><td><b>Threat intelligence</b></td><td>Feeds of known-bad IPs, domains, hashes, actor information</td><td>\"Connection to IP on threat list\"</td></tr><tr><td><b>OT/ICS/SCADA security</b></td><td>Protects industrial systems (power, water, manufacturing)</td><td>\"Unauthorized PLC write command\"</td></tr><tr><td><b>IoT security</b></td><td>Protects smart devices (CCTV, sensors, smart TVs)</td><td>\"CCTV camera contacting unknown server\"</td></tr></table><div class=\"box\"><b>NOTE — Detection alerts in the Competency Standards</b><br>The CS lists these alert sources: <b>SIEM alert, AV alert, Firewall alert, Web application firewall alert, DLP alert, EDR alert and NDR alert.</b></div>",
+   "videos": [
+    "Day04_Demo4_Which_Tool_Would_Catch_It.mp4"
+   ]
+  },
+  {
+   "h": "2. Log and Detection Management",
+   "html": "<p>A <b>log</b> is a time-stamped record of an event. A <b>detection</b> is a log or event that a security tool considers suspicious. Log management is the process of collecting, storing, protecting and reviewing logs.</p><h3>The Log Pipeline</h3><ol><li><b>Generate</b> — devices (servers, endpoints, firewalls, applications) produce logs.</li><li><b>Collect</b> — logs are sent by agents (e.g., Wazuh agent, Winlogbeat) or via syslog to a collector.</li><li><b>Normalize</b> — different formats are converted into common fields (time, source IP, user, action).</li><li><b>Correlate</b> — the SIEM applies rules that connect events (e.g., 20 failed logins + 1 success = alert).</li><li><b>Alert</b> — the SIEM creates an alert with a severity and sends it to the SOC queue.</li><li><b>Store and retain</b> — logs are kept for investigations and compliance (often 90 days online, 1 year archived).</li></ol><h3>Key Log Fields</h3><table><tr><th><b>Field</b></th><th><b>Why It Matters</b></th></tr><tr><td>Timestamp + time zone</td><td>Builds the timeline; confirm the time zone (Philippines = UTC+8)</td></tr><tr><td>Host / device name</td><td>Identifies the affected asset</td></tr><tr><td>Source and destination IP/port</td><td>Shows who talked to whom; distinguishes ingress vs egress</td></tr><tr><td>User account</td><td>Shows who did it — or whose account was misused</td></tr><tr><td>Process / file / hash</td><td>Identifies the program involved</td></tr><tr><td>Action / result</td><td>Allowed, blocked, quarantined, failed</td></tr><tr><td>Rule / signature name and severity</td><td>Why the tool raised the alert and how serious it thinks it is</td></tr></table><h3>Sample Firewall Log Line</h3><p>2026-11-04 10:15:22 FW-01 action=DENY proto=TCP src=192.0.2.8:51234 dst=203.0.113.10:3389 rule=Block-RDP-Inbound</p>",
+   "videos": [
+    "Day04_Demo2_Log_Hunt_Password_Spray.mp4"
+   ]
+  },
+  {
+   "h": "3. Security Solution Management Applications",
+   "html": "<p>Each security solution has a <b>management console</b> where analysts see alerts, endpoint status, and actions. Examples: Microsoft Defender portal, Wazuh dashboard, firewall web GUI, and SIEM search interfaces. In each console, learn where to find: the <b>alert list</b>, <b>device/agent status</b>, <b>detection details</b>, <b>actions taken</b>, and <b>logs</b>.</p>",
+   "videos": [
+    "Day04_Demo3_Security_Console_PowerShell.mp4"
+   ]
+  },
+  {
+   "h": "4. Severity Classifications",
+   "html": "<p>Security solutions assign a <b>severity</b> to each alert. Vendors use different scales, so SOPs map them to a common scale.</p><table><tr><th><b>Common Scale</b></th><th><b>Typical Vendor Values</b></th><th><b>Meaning</b></th><th><b>Example</b></th></tr><tr><td><b>Critical</b></td><td>Critical / 13–15 (Wazuh) / P1</td><td>Active, high-impact threat; act immediately</td><td>Ransomware encrypting files</td></tr><tr><td><b>High</b></td><td>High / 10–12 / P2</td><td>Likely compromise needing urgent action</td><td>Malware executing, not yet contained</td></tr><tr><td><b>Medium</b></td><td>Medium / 7–9 / P3</td><td>Suspicious activity needing review</td><td>Port scan from the internet</td></tr><tr><td><b>Low</b></td><td>Low / 4–6 / P4</td><td>Minor or blocked activity</td><td>Adware blocked by AV</td></tr><tr><td><b>Informational</b></td><td>Info / 0–3</td><td>Normal events for records</td><td>Successful signature update</td></tr></table><div class=\"box\"><b>TIP</b><br>A tool's severity is a <b>starting point, not the final answer</b>. A \"Low\" alert on the domain controller may matter more than a \"Medium\" alert on a test PC. You will learn to assess alerts against pre-identified criteria on Day 6.</div>",
+   "videos": [
+    "Day04_Demo1_Alert_Sources.mp4"
+   ]
+  },
+  {
+   "h": "Key Terms",
+   "html": "<table><tr><th><b>Term</b></th><th><b>Meaning</b></th></tr><tr><td>Defense in depth</td><td>Using multiple security layers so one failure does not expose everything</td></tr><tr><td>SIEM</td><td>Platform that collects, normalizes and correlates logs to generate alerts</td></tr><tr><td>EDR / XDR</td><td>Endpoint-focused / extended (multi-source) detection and response</td></tr><tr><td>WAF</td><td>Firewall that inspects web application requests</td></tr><tr><td>Normalization</td><td>Converting different log formats into common fields</td></tr><tr><td>Correlation rule</td><td>SIEM logic that links several events into one alert</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "References",
+   "html": "<ul><li>TESDA Competency Standards — Cyber Threat Monitoring Level I (ICT Sector), units CS-ICT251101 and CS-ICT251102.</li><li>NIST SP 800-115, Technical Guide to Information Security Testing and Assessment (Chapter 4).</li><li>NIST SP 800-61 Rev. 2/Rev. 3, Computer Security Incident Handling Guide.</li><li>MITRE ATT&amp;CK® Framework — attack.mitre.org; Lockheed Martin Cyber Kill Chain®.</li><li>Republic Act No. 10175 (Cybercrime Prevention Act of 2012) and Republic Act No. 10173 (Data Privacy Act of 2012).</li></ul>",
+   "videos": []
+  }
+ ],
+ "files": [
+  {
+   "name": "Day 4 Student Handout",
+   "href": "days/Day04_Student_Handout.pdf",
+   "size": "190 KB"
+  },
+  {
+   "name": "Day 4 Student Activities",
+   "href": "days/Day04_Student_Activities.pdf",
+   "size": "406 KB"
+  }
+ ]
+}

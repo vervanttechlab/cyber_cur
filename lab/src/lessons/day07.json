@@ -1,0 +1,65 @@
+{
+ "day": 7,
+ "title": "Security Solution Status Check",
+ "unit": "CS-ICT251101 Monitor and Report Cyber Threats",
+ "parts": [
+  {
+   "h": "Learning Objectives",
+   "html": "<p>At the end of this session, you should be able to:</p><ol><li>Explain why a monitoring analyst checks the security solutions themselves, not only their alerts.</li><li>Check whether the required enterprise security solutions are installed on every host, and find coverage gaps (PC 2.1).</li><li>Check whether each security solution is operational against the SOP checks (PC 2.2).</li><li>Check whether a security solution can clean or delete a detected issue, from its policy and the threat type (PC 2.3).</li><li>Run the full status check on a Windows workstation with PowerShell and report what fails.</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "1. Why Check the Security Solutions?",
+   "html": "<p>Every alert you handled on Days 5 and 6 came from a security solution. If that solution is missing, stopped, out of date or not allowed to act, there is no alert at all, and a quiet console looks exactly like a safe network. Element 2 of the Competency Standards asks three questions about every security solution. In the lab you follow SOC-SOP-03 Security Solution Status Check (~/day7/soc_status_sop.txt).</p><ol><li>Is it installed? (PC 2.1)</li><li>Is it operational? (PC 2.2)</li><li>Can it clean or delete the issue? (PC 2.3)</li></ol><p>The same three questions apply to every security solution in the Range of Variables: anti-virus, common firewall, threat intelligence, TDR, WAF, IDS, IPS, DLP, OT/ICS/SCADA security, IoT security, EDR/MDR, SIEM, SOAR and XDR. Today we practise on the three that sit on every computer: anti-virus (Microsoft Defender), EDR (CrowdStrike Falcon) and the SIEM agent (Wazuh).</p>",
+   "videos": []
+  },
+  {
+   "h": "2. Is It Installed? (PC 2.1)",
+   "html": "<p>The SOP says which enterprise security solutions every kind of host must have. Compare the organization's list of computers (the endpoint inventory) with what the security console reports.</p><table><tr><th><b>Host Type</b></th><th><b>AV (Defender)</b></th><th><b>EDR (Falcon)</b></th><th><b>SIEM Agent (Wazuh)</b></th></tr><tr><td><b>Windows server or workstation</b></td><td>required</td><td>required</td><td>required</td></tr><tr><td><b>Linux server</b></td><td>—</td><td>required</td><td>required</td></tr><tr><td><b>Tier 3 test PC (isolated VLAN)</b></td><td>required</td><td>not required</td><td>required</td></tr></table><div class=\"box\"><b>NOTE — The host the console has never seen</b><br>A computer that was never enrolled does not appear in the console as \"Not installed\": it does not appear at all. Always start from the endpoint inventory and look for every host in the console report. Counting the lines of both files (wc -l) is a quick first check.</div>",
+   "videos": [
+    "Day07_Demo1_Is_It_Installed.mp4"
+   ]
+  },
+  {
+   "h": "3. Is It Operational? (PC 2.2)",
+   "html": "<p>Installed is not the same as working. A solution is operational only when every check passes:</p><table><tr><th><b>Check (SOC-SOP-03)</b></th><th><b>Passes When</b></th><th><b>Where You See It</b></th></tr><tr><td><b>B1 Service</b></td><td>Running</td><td>Get-Service</td></tr><tr><td><b>B2 Real-time protection</b></td><td>On (anti-virus)</td><td>Get-MpComputerStatus</td></tr><tr><td><b>B3 Check-in</b></td><td>No more than 60 minutes ago</td><td>Console health export; agent log</td></tr><tr><td><b>B4 Content</b></td><td>Signatures dated within 3 days</td><td>AntivirusSignatureLastUpdated</td></tr><tr><td><b>B5 Version</b></td><td>At or above the minimum supported version</td><td>Console health export</td></tr><tr><td><b>B6 Tamper protection</b></td><td>On</td><td>IsTamperProtected</td></tr></table><div class=\"box\"><b>TIP — \"Running\" does not mean \"working\"</b><br>A Wazuh agent service can be Running while the agent has lost its connection to the SIEM manager: nothing reaches the SOC. Read the last lines of its log (ossec.log): \"Keep alive acknowledged\" means connected; \"Lost connection with manager\" means the SOC is blind on that computer.</div>",
+   "videos": [
+    "Day07_Demo2_Is_It_Operational.mp4"
+   ]
+  },
+  {
+   "h": "4. Can It Clean or Delete the Issue? (PC 2.3)",
+   "html": "<p>A solution can detect a threat and still be unable to remove it, because of its policy or the kind of threat. Microsoft Defender's policy (Get-MpPreference) sets a default action for each severity:</p><table><tr><th><b>Action Code</b></th><th><b>Meaning</b></th></tr><tr><td>1</td><td>Clean</td></tr><tr><td>2</td><td>Quarantine</td></tr><tr><td>3</td><td>Remove</td></tr><tr><td>6</td><td>Allow</td></tr><tr><td>8</td><td>User defined</td></tr><tr><td>9</td><td>No action</td></tr><tr><td>10</td><td>Block</td></tr></table><table><tr><th><b>Rule</b></th><th><b>Meaning</b></th></tr><tr><td>C1 Action code</td><td>Can clean or delete only with action 1, 2, 3 or 10 for the threat's severity</td></tr><tr><td>C2 Exclusion</td><td>A folder in ExclusionPath is not scanned; user folders (Downloads, Desktop, Temp, Documents) must never be excluded</td></tr><tr><td>C3 Detect only</td><td>EDR in \"Detect only\" mode raises alerts but cannot stop or remove anything; required mode is \"Prevent\"</td></tr><tr><td>C4 Re-image</td><td>Ransomware, rootkits and boot-sector infections: the host is rebuilt by IT, even if the file was deleted</td></tr></table><h3>Actions in the Range of Variables</h3><table><tr><th><b>Action</b></th><th><b>Meaning</b></th></tr><tr><td>Failed</td><td>The solution tried and could not act: report it</td></tr><tr><td>Clean</td><td>Malicious code removed, file kept</td></tr><tr><td>Delete</td><td>File removed</td></tr><tr><td>Quarantine</td><td>File moved to a safe, locked place</td></tr><tr><td>Blocked</td><td>Stopped before it could run or connect</td></tr><tr><td>Re-image</td><td>Host rebuilt from a clean image</td></tr></table>",
+   "videos": [
+    "Day07_Demo3_Can_It_Clean.mp4"
+   ]
+  },
+  {
+   "h": "5. What to Report",
+   "html": "<ul><li>A missing required solution or a host never enrolled (coverage gap)</li><li>A failed operational check, with the check code (B1–B6)</li><li>A policy that cannot clean: the action code, the exclusion or the detect-only mode</li><li>A detection that needs a re-image</li><li>Report to the Shift Lead. Level I does not change policies or uninstall anything.</li></ul>",
+   "videos": []
+  },
+  {
+   "h": "Key Terms",
+   "html": "<table><tr><th><b>Term</b></th><th><b>Meaning</b></th></tr><tr><td>Enterprise security solution</td><td>Security software managed centrally for the whole organization</td></tr><tr><td>Agent / sensor</td><td>The small program on each computer that reports to the console</td></tr><tr><td>Coverage gap</td><td>A host without a required security solution</td></tr><tr><td>Check-in / keep-alive</td><td>The regular \"I am alive\" message from an agent to its console or manager</td></tr><tr><td>Tamper protection</td><td>A setting that stops users and malware from switching security off</td></tr><tr><td>Exclusion</td><td>A folder, file or process the solution is told to ignore</td></tr><tr><td>Detect only mode</td><td>The solution watches and alerts but never blocks or removes</td></tr><tr><td>Re-image</td><td>Wiping a computer and reinstalling it from a known clean image</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "References",
+   "html": "<ul><li>TESDA Competency Standards — Cyber Threat Monitoring Level I (ICT Sector), unit CS-ICT251101, Element 2 and Range of Variables 5–6.</li><li>Microsoft Learn — Microsoft Defender Antivirus: Get-MpComputerStatus and Get-MpPreference (threat default actions, exclusions).</li><li>Wazuh documentation — agent connection and keep-alive (ossec.log).</li><li>NIST SP 800-137, Information Security Continuous Monitoring (ISCM) for Federal Information Systems and Organizations.</li><li>NIST SP 800-83 Rev. 1, Guide to Malware Incident Prevention and Handling for Desktops and Laptops.</li></ul>",
+   "videos": []
+  }
+ ],
+ "files": [
+  {
+   "name": "Day 7 Student Handout",
+   "href": "days/Day07_Student_Handout.pdf",
+   "size": "305 KB"
+  },
+  {
+   "name": "Day 7 Student Activities",
+   "href": "days/Day07_Student_Activities.pdf",
+   "size": "389 KB"
+  }
+ ]
+}

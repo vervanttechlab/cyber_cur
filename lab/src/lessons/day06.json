@@ -1,0 +1,65 @@
+{
+ "day": 6,
+ "title": "Alert Triage and Ticketing",
+ "unit": "CS-ICT251101 Monitor and Report Cyber Threats",
+ "parts": [
+  {
+   "h": "Learning Objectives",
+   "html": "<p>At the end of this session, you should be able to:</p><ol><li>Explain the three pre-identified criteria in the Competency Standards: threat, detection and routine.</li><li>Assess an alert step by step: routine check, detection, threat level, asset tier and priority (PC 1.4).</li><li>Tell a true positive from a false positive or routine activity using evidence, not the rule name.</li><li>Issue a complete incident ticket upon confirmation of detection, linking related alerts and reports (PC 1.5).</li><li>Prioritize the work queue with a priority matrix and response targets.</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "1. From Receiving to Assessing",
+   "html": "<p>Yesterday you received alerts and reports and checked them for red flags (PC 1.1–1.3). Today you assess each one against pre-identified criteria (PC 1.4) and issue a ticket when the detection is confirmed (PC 1.5). This is called triage, the same word hospitals use when a nurse decides which patient the doctor sees first. In the lab you follow SOC-SOP-02 Alert Assessment and Ticketing (~/day6/soc_triage_sop.txt), always in this order:</p><ol><li>Routine — is it expected, approved activity? If yes, record it with its RT code and stop.</li><li>Detection — what does the evidence show happened: confirmed, blocked, or a false positive?</li><li>Threat — how dangerous is it: critical, high, medium or low?</li><li>Asset — how important is the affected computer: Tier 1, 2 or 3?</li><li>Priority and ticket — read the priority from the matrix, and issue a ticket if the detection is confirmed.</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "2. The Pre-identified Criteria (Range of Variables)",
+   "html": "<p>The Competency Standards list three kinds of pre-identified criteria: routine, detection and threat. \"Pre-identified\" means they are written in the SOP before any alert arrives, so every analyst judges alerts the same way.</p><h3>Routine Criteria (check first)</h3><table><tr><th><b>Code</b></th><th><b>Routine Activity (SOC-SOP-02 STEP 1)</b></th></tr><tr><td>RT1</td><td>Security solution updates (Defender signatures, Wazuh rules)</td></tr><tr><td>RT2</td><td>Internal vulnerability scans from SCAN-01 (10.10.1.60), Tuesday and Thursday 08:00–10:00</td></tr><tr><td>RT3</td><td>External scan by the approved vendor from 198.51.100.23, Thursday 09:00–11:00 (CHG-1142)</td></tr><tr><td>RT4</td><td>Backups by scbackup.exe (SafeCopy, signed)</td></tr><tr><td>RT5</td><td>Work covered by an APPROVED change: same host, same person, inside the change window</td></tr><tr><td>RT6</td><td>Agent keep-alive and health messages</td></tr></table><h3>Detection Criteria</h3><table><tr><th><b>Detection</b></th><th><b>Meaning</b></th><th><b>Example from the Lab</b></th></tr><tr><td><b>Confirmed (true positive)</b></td><td>The malicious activity happened: the program ran, the logon succeeded, data left, files changed</td><td>Q-5001: 18 failed logons, then a successful one</td></tr><tr><td><b>Blocked</b></td><td>A real attempt that a security solution stopped before it took effect</td><td>Q-5004: SQL injection answered with 403</td></tr><tr><td><b>False positive</b></td><td>The alert fired, but the activity was not malicious</td><td>B-03: \"impossible travel\" through the company VPN</td></tr></table><div class=\"box\"><b>NOTE — Read the details, not only the rule name</b><br>The rule name says what the tool suspected; the details say what happened. \"Virus detected\" can be IT's approved antivirus test (routine), and \"Trojan quarantined\" can be dangerous if the user restored it and ran it. Red flags (ransomware, PE infection) always count as Confirmed, even when one step was blocked.</div><h3>Threat Criteria</h3><table><tr><th><b>Threat Level</b></th><th><b>Meaning</b></th><th><b>Example</b></th></tr><tr><td><b>Critical</b></td><td>A red flag: ransomware or PE infection (SOC-SOP-01 Section C)</td><td>Mass rename to .lockd</td></tr><tr><td><b>High</b></td><td>Confirmed compromise of an account or host, or sensitive data that left</td><td>Payroll file uploaded to a personal drive</td></tr><tr><td><b>Medium</b></td><td>An attack attempt that was blocked or failed; malware quarantined before it ran</td><td>Trojan quarantined on download</td></tr><tr><td><b>Low</b></td><td>Nuisance: unwanted apps (PUA), adware, internet noise blocked at the edge</td><td>PUA installer blocked</td></tr></table>",
+   "videos": [
+    "Day06_Demo1_Assess_Alerts.mp4"
+   ]
+  },
+  {
+   "h": "3. Asset Tiers and the Priority Matrix",
+   "html": "<p>The same threat matters more on a more important computer. The asset inventory (~/day6/asset_inventory.csv) gives every computer a tier. Always use the AFFECTED computer, not the device that raised the alert: a firewall alert about a marketing PC is about the marketing PC.</p><table><tr><th><b>Tier</b></th><th><b>Examples</b></th></tr><tr><td>Tier 1</td><td>Business-critical: domain controller, core banking, payroll, servers, public website, internet firewall</td></tr><tr><td>Tier 2</td><td>Business computers: staff workstations and laptops</td></tr><tr><td>Tier 3</td><td>Low impact: isolated test and lab machines</td></tr></table><table><tr><th><b>Threat</b></th><th><b>Tier 1</b></th><th><b>Tier 2</b></th><th><b>Tier 3</b></th></tr><tr><td><b>Critical</b></td><td>P1</td><td>P1</td><td>P1</td></tr><tr><td><b>High</b></td><td>P1</td><td>P2</td><td>P2</td></tr><tr><td><b>Medium</b></td><td>P2</td><td>P3</td><td>P3</td></tr><tr><td><b>Low</b></td><td>P3</td><td>P4</td><td>P4</td></tr></table><ul><li>P1 — respond within 15 minutes and call the Shift Lead</li><li>P2 — within 1 hour</li><li>P3 — within 4 hours</li><li>P4 — next business day</li><li>Priority is set for Confirmed and Blocked alerts; false positives and routine alerts get none.</li></ul>",
+   "videos": [
+    "Day06_Demo2_True_or_False_Positive.mp4"
+   ]
+  },
+  {
+   "h": "4. Issuing the Ticket (PC 1.5)",
+   "html": "<p>A ticket is the official record of an incident in the ticketing system. The Competency Standards say a ticket is issued upon confirmation of detection, so blocked attempts, false positives and routine alerts are recorded in the shift log instead.</p><table><tr><th><b>Rule</b></th><th><b>What to Do</b></th></tr><tr><td>T1</td><td>Confirmed → issue an incident ticket</td></tr><tr><td>T2</td><td>One ticket per incident: link every alert and report about the same incident to it</td></tr><tr><td>T3</td><td>Blocked → shift log with its priority (ticket only if the Shift Lead asks)</td></tr><tr><td>T4</td><td>False positive → shift log, and request rule tuning</td></tr><tr><td>T5</td><td>Routine → shift log with the RT code</td></tr></table><table><tr><th><b>Ticket Field</b></th><th><b>What to Write</b></th></tr><tr><td>Ticket ID and title</td><td>INC-20261105-101 · \"Ransomware activity on FIN-PC-03\"</td></tr><tr><td>Linked alerts and reports</td><td>Every alert ID and report ID about this incident</td></tr><tr><td>Affected asset</td><td>Host, role and tier</td></tr><tr><td>Category and priority</td><td>Ransomware / PE infection / Account compromise / Data leak / Malware · P1–P4</td></tr><tr><td>Evidence</td><td>The facts that confirm the detection: counts, names, times</td></tr><tr><td>Actions taken</td><td>What Level I already did, e.g. \"user told to unplug the network cable\"</td></tr><tr><td>Assigned to and status</td><td>Shift Lead (P1), Tier 2 analyst (P2–P3), IT Helpdesk (P4) · New</td></tr></table><div class=\"box\"><b>TIP — One incident, one ticket</b><br>On FIN-PC-03 the EDR saw a mass rename (Q-5005), then a shadow copy deletion (Q-5011), and the user phoned the SOC (IR-01). That is one incident, so it gets one ticket with all three linked. Write facts, not guesses, and never put passwords or unnecessary personal data in a ticket (Data Privacy Act, RA 10173).</div>",
+   "videos": [
+    "Day06_Demo3_Write_the_Ticket.mp4"
+   ]
+  },
+  {
+   "h": "5. Common Triage Mistakes",
+   "html": "<ul><li>Trusting the rule name or the vendor severity without reading the details</li><li>Forgetting the routine list and the change calendar (only APPROVED changes count)</li><li>Using the tier of the device that raised the alert instead of the affected computer</li><li>Opening a ticket for a blocked attempt, or several tickets for one incident</li><li>Closing an incident ticket: Level I opens and hands over; it never closes</li></ul>",
+   "videos": []
+  },
+  {
+   "h": "Key Terms",
+   "html": "<table><tr><th><b>Term</b></th><th><b>Meaning</b></th></tr><tr><td>Triage</td><td>Sorting alerts so that the most urgent real threats are handled first</td></tr><tr><td>Pre-identified criteria</td><td>Rules written in the SOP in advance: routine, detection and threat</td></tr><tr><td>True positive</td><td>An alert about something malicious that really happened (Confirmed)</td></tr><tr><td>False positive</td><td>An alert that fired on harmless activity</td></tr><tr><td>Asset tier</td><td>How important a computer is to the business (Tier 1 most important)</td></tr><tr><td>Priority</td><td>How fast to respond (P1–P4), from threat × asset tier</td></tr><tr><td>Change calendar</td><td>The list of approved planned work; it explains many \"suspicious\" alerts</td></tr><tr><td>Ticket</td><td>The official record of one incident, with all linked alerts and reports</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "References",
+   "html": "<ul><li>TESDA Competency Standards — Cyber Threat Monitoring Level I (ICT Sector), unit CS-ICT251101, Element 1 and Range of Variables 4.</li><li>NIST SP 800-61 Rev. 3, Incident Response Recommendations and Considerations for Cybersecurity Risk Management.</li><li>ITIL® 4 Incident Management practice (priority from impact and urgency).</li><li>MITRE ATT&amp;CK® Framework — attack.mitre.org.</li><li>Republic Act No. 10173 (Data Privacy Act of 2012) and Republic Act No. 10175 (Cybercrime Prevention Act of 2012).</li></ul>",
+   "videos": []
+  }
+ ],
+ "files": [
+  {
+   "name": "Day 6 Student Handout",
+   "href": "days/Day06_Student_Handout.pdf",
+   "size": "317 KB"
+  },
+  {
+   "name": "Day 6 Student Activities",
+   "href": "days/Day06_Student_Activities.pdf",
+   "size": "391 KB"
+  }
+ ]
+}
