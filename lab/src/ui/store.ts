@@ -74,6 +74,12 @@ export function save(s: LabState) {
   timer = window.setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage unavailable */ } }, 250);
 }
 
+/** Write the pending save now (before a reload, e.g. "Update now"), instead of 250 ms later. */
+export function saveNow(s: LabState | undefined) {
+  clearTimeout(timer);
+  if (s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage unavailable */ } }
+}
+
 export function clearSaved() { try { localStorage.removeItem(KEY); } catch { /* ignore */ } }
 
 export const now = () => new Date().toLocaleString('en-PH', { hour12: true, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' });

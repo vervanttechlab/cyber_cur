@@ -31,8 +31,9 @@ try {
   // the new site = exactly dist/ + version.json + .nojekyll (files no longer in dist/ are removed)
   for (const f of readdirSync(dir)) if (f !== '.git') rmSync(join(dir, f), { recursive: true, force: true });
   cpSync(dist, dir, { recursive: true });
-  const version = new Date().toISOString();
-  writeFileSync(join(dir, 'version.json'), JSON.stringify({ version }, null, 1));
+  // version.json comes from the build (its id is inside the lab code, so open labs can tell a newer build was published)
+  if (!existsSync(join(dist, 'version.json'))) throw new Error('dist/version.json is missing: rebuild with npm run build');
+  const { version } = JSON.parse(readFileSync(join(dist, 'version.json'), 'utf-8'));
   writeFileSync(join(dir, '.nojekyll'), ''); // serve files as they are
   git('add', '-A');
   const changed = execFileSync('git', ['diff', '--cached', '--name-only'], { cwd: dir, encoding: 'utf-8' }).trim().split('\n').filter(Boolean);

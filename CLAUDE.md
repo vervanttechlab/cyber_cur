@@ -102,6 +102,7 @@ Vite + TypeScript + xterm.js. Trainees use https://vervanttechlab.github.io/ctm-
   - Demo hosts WKS-TRN-07 and ubuntu-lab match the videos.
   - Seat hosts WKS-LAB-NN and ubuntu-lab-NN are seeded by seat number, 1–40.
   - Hosts are rebuilt on every app start (nothing persists), so a per-seat activity that continues an earlier day must regenerate its evidence from that day's facts, as `day9Seat(win, seat, d8)` does.
+- **Update notices** (`src/ui/updates.ts`): each build has an id (`__BUILD__`, from `vite.config.ts`), which also writes `dist/version.json` with the newest `src/whatsnew.json` notes. Open labs check `version.json` every minute and show an "updated" modal (Update now = save, then reload; Later = keep working). **Before a publish that trainees should hear about, add an entry at the top of `src/whatsnew.json`** (plain-language `items`, optional `trainer` items).
 - **Updates without a new `.exe`**: `electron/main.cjs` loads the URL in `electron/web.json` when it is reachable, and otherwise the built-in `dist/` (title "offline copy"). `npm run publish:web` pushes `dist/` to the `vervanttechlab/ctm-virtual-lab` Pages repo. A new `.exe` is only needed when `electron/` changes. `node e2e/electron.web.mjs` checks the start-up path. The site and the offline copy keep separate localStorage.
 - **Sync** (`sync/Code.gs`, an Apps Script web app; client `src/ui/sync.ts`; URL in `src/sync.config.json`, empty = offline build):
   - Email-code sign-in. The server assigns seats: the Roster tab seat, else the lowest free seat. The client never sends one.

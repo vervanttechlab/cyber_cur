@@ -19,7 +19,7 @@ import './missions/practice34';
 import { WORKSPACE } from './missions/workspace';
 import type { ScenarioPack } from './missions/types';
 import { TermView, type CommandEvent } from './ui/terminal';
-import { emptyState, load, save, clearSaved, now, clipOutput, trimLog, type LabState } from './ui/store';
+import { emptyState, load, save, saveNow, clearSaved, now, clipOutput, trimLog, type LabState } from './ui/store';
 import { notebookHtml, download, printHtml } from './ui/export';
 import { api, syncEnabled, queueSync, flushOnExit, flushNow, onStatus, type SyncStatus } from './ui/sync';
 import { onSave } from './ui/store';
@@ -27,6 +27,7 @@ import { foldersLine } from './missions/folders';
 import { reportHtml, reportCsv, defaultDay, type ReportData } from './ui/report';
 import { Social, type StatusReply } from './ui/social';
 import { copyPlan, sharedHtml, actName, offerHtml, readyHtml, filledAfter, emptyKeys, type Share, type SharedAnswers, type Offer } from './ui/share';
+import { Updates } from './ui/updates';
 import { teamsHtml, teamList, changes as teamChanges, balance, type TeamDraft } from './views/teams';
 import { watchFor, dayVideos, videoTitle } from './missions/watch';
 import { homeHtml, dayHtml, lessonHtml, filesHtml, progressHtml, dayTitle, esc, code, type PageCtx, type Lesson } from './views/pages';
@@ -690,6 +691,7 @@ function openMenu() {
     ${trainer ? '<button class="btn" id="btn-board">Trainer board</button><button class="btn" id="btn-report">Class report</button>' : ''}
     <div class="small muted" style="margin:6px 0 0">Theme</div>
     <div class="seg2">${['auto', 'light', 'dark'].map((t) => `<button data-theme="${t}" class="${theme === t ? 'on' : ''}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div>
+    <button class="btn" id="btn-news">🆕 What's new</button>
     <button class="btn" id="btn-user" title="Sign out or change seat" style="margin-top:6px">Switch user</button>
     <button class="btn quiet" data-close>Close</button></div>`;
   dlg.querySelectorAll<HTMLElement>('[data-close]').forEach((b) => b.addEventListener('click', () => dlg.close()));
@@ -702,6 +704,7 @@ function openMenu() {
   $('btn-report')?.addEventListener('click', () => { dlg.close(); openReport(); });
   $('btn-board')?.addEventListener('click', () => { dlg.close(); go('#/board'); });
   $('btn-user').onclick = switchUser;
+  $('btn-news').onclick = () => { dlg.close(); updates.whatsNew(); };
   if (!dlg.open) dlg.showModal();
 }
 $('btn-menu').onclick = openMenu;
@@ -1101,7 +1104,7 @@ function offerDone(list: Share[]) {
   for (const s of list) o[s.id] = s.t;
   try { localStorage.setItem(offerKey(), JSON.stringify(o)); } catch { /* storage blocked: the offer may show again */ }
 }
-const dlgBusy = () => ['board-dlg', 'submit-dlg', 'video-dlg', 'menu-dlg', 'report-dlg', 'signin'].some((id) => $<HTMLDialogElement>(id)?.open);
+const dlgBusy = () => ['board-dlg', 'submit-dlg', 'video-dlg', 'menu-dlg', 'report-dlg', 'signin', 'update-dlg'].some((id) => $<HTMLDialogElement>(id)?.open);
 let offering = false;
 async function maybeOffer() {
   if (offering || !st?.token || !onWork() || isTrainer() || dlgBusy() || !$('watch').hidden) return;
@@ -1275,7 +1278,18 @@ onSave((s) => { if (s === st) stamp(); if (s === st && s.token) queueSync(s, pro
 window.addEventListener('pagehide', flushOnExit);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushOnExit(); });
 
+// a newer published lab: tell the trainee (modal), save their work, reload only when they choose
+const updates = new Updates({
+  busy: () => ['board-dlg', 'submit-dlg', 'video-dlg', 'menu-dlg', 'report-dlg', 'signin'].some((id) => $<HTMLDialogElement>(id)?.open),
+  trainer: () => isTrainer(),
+  flush: () => { saveNow(st); return st?.token ? flushNow() : Promise.resolve(true); },
+  savedText: () => (st?.token ? "Everything you did is saved on this computer and sent to your trainer's Sheet before the update." : 'Everything you did is saved on this computer.'),
+  toast,
+  returning: () => !!load(),
+});
+
 const saved = load();
+updates.start();
 if (saved) {
   st = saved; boot();
   // Signed in before: pick up newer progress saved on another computer, or ask to sign in again

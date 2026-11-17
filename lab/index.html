@@ -16,6 +16,7 @@
     <nav class="crumbs" id="crumbs" aria-label="You are here"></nav>
     <span class="tb-flag" title="Everything in this lab is simulated. Nothing touches your computer or a real network.">LAB ONLY · TRAINING DATA</span>
     <span id="sync" class="sync-chip off"></span>
+    <button class="tb-btn tb-update" id="btn-update" hidden title="A new version of the lab is ready">🆕 Update ready</button>
     <button class="tb-btn" id="btn-social" hidden>👥 Team</button>
     <div class="tb-user" id="who"></div>
     <button class="tb-btn" id="btn-menu" aria-haspopup="dialog" title="Account, notebook export, theme"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.6"/></svg><span class="sr">Menu</span></button>
@@ -63,6 +64,7 @@
   <dialog id="menu-dlg" class="menu"></dialog>
   <dialog id="submit-dlg" class="sdlg"></dialog>
   <dialog id="board-dlg" class="bdlg"></dialog>
+  <dialog id="update-dlg" class="bdlg updlg"></dialog>
   <aside id="social" class="social" hidden aria-label="Who is online and team chat"></aside>
   <script type="module" src="/src/main.ts"></script>
 </body>

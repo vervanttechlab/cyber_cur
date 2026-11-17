@@ -380,6 +380,16 @@ dialog::backdrop { background: rgba(14,26,46,.7); }
 .of-seat { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; background: var(--warn-bg); padding: 8px 10px; margin: 4px 0; }
 .of-left { margin: 4px 0 10px 18px; font-size: 13px; }
 
+/* Update notice and What's new */
+.bdlg.updlg { width: min(620px, 94vw); }
+.up-body { max-height: 70vh; overflow: auto; }
+.up-note h3 { margin: 2px 0 6px; font-size: 16px; }
+.up-note ul { margin: 0 0 10px 18px; padding: 0; font-size: 13.5px; line-height: 1.5; }
+.up-note + .up-note { border-top: 1px solid var(--line); padding-top: 10px; }
+.tb-update { background: var(--amber); color: #fff; font-weight: 700; border-radius: 2px; animation: up-pulse 2s ease-in-out 3; }
+@keyframes up-pulse { 50% { box-shadow: 0 0 0 4px rgba(191,143,0,.35); } }
+@media (prefers-reduced-motion: reduce) { .tb-update { animation: none; } }
+
 /* Teams page (trainer) */
 .tm-n { width: 56px; height: var(--tap); border: 1px solid var(--line-strong); padding: 0 6px; margin: 0 4px; }
 .boardbar .warn { color: var(--warn); font-weight: 600; }

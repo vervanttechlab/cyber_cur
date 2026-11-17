@@ -1,0 +1,20 @@
+[
+  {
+    "id": "2026-11-17-teams",
+    "date": "17 Nov 2026",
+    "title": "Team rooms, shared answers and update notices",
+    "items": [
+      "👥 Team is now one room for your team: Chat, Members and Shared answers. Messages arrive within seconds, and you see when a teammate is typing.",
+      "Trainer announcements are pinned at the top of your team room.",
+      "🤝 Share my answers (above an activity's worksheet) shares your answers with your team, on the days your trainer turns sharing on.",
+      "When a teammate shares the activity you are on, the lab offers to fill in your worksheet with their answers. Your trainer sees every copy. Steps are never copied: run the commands on your own terminal.",
+      "When every answer is filled in, the lab tells you the activity is ready to submit.",
+      "The lab now tells you when it has been updated. Your work is saved first, and you can finish what you are doing before updating."
+    ],
+    "trainer": [
+      "Trainer board > 👥 Teams: drag trainees between teams, rename teams, or balance the class into mixed teams.",
+      "Settings > Answer Sharing turns sharing on per day. Copies show as ⧉ COPIED on the board and in the Copies tab.",
+      "Paste the new Code.gs, run setup and deploy a new version to switch this on."
+    ]
+  }
+]
