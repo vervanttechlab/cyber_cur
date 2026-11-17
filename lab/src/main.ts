@@ -26,6 +26,8 @@ import { onSave } from './ui/store';
 import { foldersLine } from './missions/folders';
 import { reportHtml, reportCsv, defaultDay, type ReportData } from './ui/report';
 import { Social, type StatusReply } from './ui/social';
+import { copyPlan, sharedHtml, actName, offerHtml, readyHtml, filledAfter, emptyKeys, type Share, type SharedAnswers, type Offer } from './ui/share';
+import { teamsHtml, teamList, changes as teamChanges, balance, type TeamDraft } from './views/teams';
 import { watchFor, dayVideos, videoTitle } from './missions/watch';
 import { homeHtml, dayHtml, lessonHtml, filesHtml, progressHtml, dayTitle, esc, code, type PageCtx, type Lesson } from './views/pages';
 import { buildPayload, autoScore, verdictLabel, when, type MySubs } from './ui/submit';
@@ -47,7 +49,7 @@ const terms = new Map<HostId, TermView>();
 let activeHost: HostId = 'demo-win';
 let nbTab: 'ws' | 'ev' | 'notes' | 'log' = 'ws';
 let grades: Record<string, Record<string, { ok: boolean; hint?: string }>> = {};
-type Route = { name: 'home' } | { name: 'day'; day: number } | { name: 'lesson'; day: number; k: number } | { name: 'files'; day: number } | { name: 'work'; id: string } | { name: 'progress' } | { name: 'board'; bday?: number } | { name: 'trainee'; email: string; act?: string };
+type Route = { name: 'home' } | { name: 'day'; day: number } | { name: 'lesson'; day: number; k: number } | { name: 'files'; day: number } | { name: 'work'; id: string } | { name: 'progress' } | { name: 'board'; bday?: number } | { name: 'trainee'; email: string; act?: string } | { name: 'teams' };
 let route: Route = { name: 'home' };
 
 const mission = () => ALL.find((m) => m.id === st.missionId) ?? ALL[0];
@@ -279,6 +281,7 @@ function parseRoute(h: string): Route {
   if (p[0] === 'workspace') return { name: 'work', id: 'workspace' };
   if (p[0] === 'progress') return { name: 'progress' };
   if (p[0] === 'board') return { name: 'board', bday: packOf(n) ? n : undefined };
+  if (p[0] === 'teams') return { name: 'teams' };
   if (p[0] === 'trainee' && p[1]) return { name: 'trainee', email: p[1].trim().toLowerCase(), act: ALL.some((m) => m.id === p[2]) ? p[2] : undefined };
   return isTrainer() ? { name: 'board' } : { name: 'home' };
 }
@@ -287,7 +290,7 @@ function onRoute() {
   const r = parseRoute(location.hash);
   const day = 'day' in r ? r.day : r.name === 'work' ? ALL.find((m) => m.id === r.id)!.day : 0;
   if (day > 0 && !unlocked(day)) { toast(`🔒 Day ${day} is locked. Finish every Day ${day - 1} activity first.`); return go('#/'); }
-  if ((r.name === 'board' || r.name === 'trainee') && !isTrainer()) return go('#/');
+  if ((r.name === 'board' || r.name === 'trainee' || r.name === 'teams') && !isTrainer()) return go('#/');
   if (r.name === 'board' && r.bday) boardDay = r.bday;
   if (isTrainer() && r.name === 'day' && (!board || Date.now() - board.generated > 60000)) loadBoard(); // the class results on the Day page
   if (r.name === 'work') {
@@ -314,7 +317,7 @@ function renderAll() {
   const work = onWork();
   $('work').hidden = !work; $('view').hidden = work;
   document.body.classList.toggle('working', work);
-  if (work) { renderMissions(); renderHead(); renderTabs(); renderNotebook(); renderWatch(); renderStatusbar(); }
+  if (work) { renderMissions(); renderHead(); renderTabs(); renderNotebook(); renderWatch(); renderStatusbar(); void maybeOffer(); }
   else renderPage();
   social.setVisible(!!st.token && syncEnabled());
 }
@@ -333,6 +336,7 @@ function renderChrome() {
   if (r.name === 'progress') { crumbs.push(['My progress', '']); back = ['Home', '#/']; }
   if (r.name === 'board') { crumbs.splice(0, 1, ['Trainer board', '']); back = null; }
   if (r.name === 'trainee') { crumbs.push([tdata?.email === r.email ? tdata.name || r.email : r.email, '']); back = ['Board', '#/']; }
+  if (r.name === 'teams') { crumbs.push(['Teams', '']); back = ['Board', '#/']; }
   if (r.name === 'work') {
     const m = mission();
     crumbs.push([m.kind === 'workspace' ? 'Workspace' : m.title.replace(/ · .*/, '').replace(/^Practice: /, 'Practice '), '']);
@@ -345,7 +349,7 @@ function renderChrome() {
   const link = (href: string, on: boolean, inner: string, cls = '') => `<a href="${href}" class="${on ? 'on' : ''} ${cls}">${inner}</a>`;
   const tr = isTrainer();
   $('sidenav').innerHTML = (tr
-    ? link('#/', r.name === 'board' || r.name === 'trainee', '<span class="sn-n">▦</span><span class="sn-t">Trainer board</span>') + link('#/report', false, '<span class="sn-n">☷</span><span class="sn-t">Class report</span>', 'sn-report')
+    ? link('#/', r.name === 'board' || r.name === 'trainee', '<span class="sn-n">▦</span><span class="sn-t">Trainer board</span>') + link('#/teams', r.name === 'teams', '<span class="sn-n">👥</span><span class="sn-t">Teams</span>') + link('#/report', false, '<span class="sn-n">☷</span><span class="sn-t">Class report</span>', 'sn-report')
     : link('#/', r.name === 'home', '<span class="sn-n">⌂</span><span class="sn-t">Home</span>')) +
     `<div class="sn-h">${tr ? 'Days · class view and preview' : 'Training days'}</div>` + DAYS.map((p) => {
       const open = unlocked(p.day);
@@ -379,6 +383,7 @@ function renderPage() {
   } else if (r.name === 'files') v.innerHTML = filesHtml(c, r.day);
   else if (r.name === 'board') renderBoard();
   else if (r.name === 'trainee') renderTrainee();
+  else if (r.name === 'teams') renderTeams(true);
   else v.innerHTML = progressHtml(c);
 }
 
@@ -544,6 +549,7 @@ function finishWatch(how: 'watched' | 'skipped') {
   save(st); watchIdx = 0;
   $('watch').hidden = true; $('watch').innerHTML = '';
   showPane('term'); renderTabs();
+  void maybeOffer();
 }
 function markVideo(file: string) { if (!st.videos?.[file]) { (st.videos ??= {})[file] = Date.now(); save(st); } }
 
@@ -618,10 +624,11 @@ function renderNotebook() {
   if (nbTab === 'ws') {
     if (!m.worksheet) { body.innerHTML = `<p class="muted">This practice mission has no worksheet. Follow the steps, compare your screen with the video, and pin useful outputs as evidence.</p><p class="muted">Every activity has its worksheet here.</p>`; return; }
     const ws = m.worksheet;
-    body.innerHTML = worksheetHtml(ws, !!showMarks[ws.id]);
+    body.innerHTML = `<div id="teambar"></div>` + worksheetHtml(ws, !!showMarks[ws.id]);
+    renderTeamBar();
     body.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('[data-k]').forEach((el) => {
       const upd = () => { (st.ws[ws.id] ??= {})[el.dataset.k!] = el.value; save(st); };
-      el.addEventListener('input', upd); el.addEventListener('change', upd);
+      el.addEventListener('input', upd); el.addEventListener('change', () => { upd(); showReady(m); });
     });
   } else if (nbTab === 'ev') {
     const evs = st.evidence.filter((e) => (e.day ?? 2) === m.day);
@@ -772,7 +779,7 @@ function setSubs(x: MySubs | undefined) {
     for (const [id, s] of Object.entries(x.latest)) if (s.gradedAt && s.gradedAt !== prev.latest[id]?.gradedAt) toast(`📝 Your trainer checked ${esc(title(id))}${s.verdict ? `: <b>${verdictLabel(s.verdict)}</b>` : ''}.${s.feedback ? ` Feedback: ${esc(s.feedback)}` : ''}`);
     for (const id of Object.keys(x.redo)) if (!prev.redo[id]) toast(`↩ Your trainer returned ${esc(title(id))} for redo: ${esc(x.redo[id].note)}`);
   }
-  if (onWork()) { renderMissions(); renderStatusbar(); } else if (route.name !== 'board' && route.name !== 'trainee' && route.name !== 'lesson') renderPage();
+  if (onWork()) { renderMissions(); renderStatusbar(); } else if (route.name !== 'board' && route.name !== 'trainee' && route.name !== 'teams' && route.name !== 'lesson') renderPage();
 }
 
 /** Trainer's redo note or verdict + feedback, at the top of the activity's steps. */
@@ -834,7 +841,7 @@ let board: BoardData | null = null;
 let boardDay = 0;
 /** Load the board data in the background (the Day page shows the class results from it). */
 async function loadBoard() {
-  try { board = await api<BoardData>('board', { token: st.token }); if (!onWork() && route.name !== 'board' && route.name !== 'trainee' && route.name !== 'lesson') renderPage(); }
+  try { board = await api<BoardData>('board', { token: st.token }); if (!onWork() && route.name !== 'board' && route.name !== 'trainee' && route.name !== 'teams' && route.name !== 'lesson') renderPage(); }
   catch { /* the Day page keeps "Loading the class…"; the board itself shows the error */ }
 }
 /** Class results of one activity, from the board data. */
@@ -1015,6 +1022,232 @@ async function openDetail(email: string, act: string, attempt?: number) {
   });
 }
 
+// ------------------------------------------------------------------ team: share answers, open a teammate's, copy them
+/** Above an activity's worksheet: share my answers with my team, and open the answers my teammates share. */
+function renderTeamBar() {
+  const el = document.getElementById('teambar');
+  if (!el) return;
+  const m = mission();
+  const info = social.info();
+  if (!onWork() || !isActivity(m) || !m.worksheet || !info || !info.team || isTrainer()) { el.className = ''; el.innerHTML = ''; return; }
+  if (!info.shareDays.includes(m.day)) {
+    el.className = 'teambar off';
+    el.innerHTML = `🤝 Answer sharing in ${esc(info.team)} is off for Day ${m.day}. You can still ask your team in the <button class="link" id="tb-chat">team chat</button>.`;
+    $('tb-chat').onclick = () => social.open('chat');
+    return;
+  }
+  const mine = info.shares.some((s) => s.mine && s.act === m.id);
+  const others = info.shares.filter((s) => !s.mine && s.act === m.id);
+  el.className = 'teambar';
+  el.innerHTML = `<label class="tb-share"><input type="checkbox" id="tb-share" ${mine ? 'checked' : ''}> 🤝 Share my answers with ${esc(info.team)}</label>
+    <span class="tb-others">${others.length ? `Shared by ${others.map((s) => `<button class="link" data-share="${s.id}" title="Open the answers of ${esc(s.name)}">${esc(s.name)}</button>`).join(', ')}` : '<span class="muted">No teammate shares this activity yet.</span>'}</span>`;
+  const box = $<HTMLInputElement>('tb-share');
+  box.onchange = async () => {
+    const on = box.checked;
+    box.disabled = true;
+    try {
+      if (on) await flushNow(); // teammates read the answers saved online: send the latest first
+      const r = await api<{ shares: Share[] }>('share', { token: st.token, day: m.day, act: m.id, ws: m.worksheet!.id, on });
+      social.setShares(r.shares);
+      toast(on ? `🤝 ${esc(actName(m, m.id))}: your answers are shared with ${esc(info.team)}. They always see your latest saved answers.` : `${esc(actName(m, m.id))}: you stopped sharing your answers.`);
+    } catch (err) { toast(esc((err as Error).message)); box.checked = !on; }
+    finally { box.disabled = false; }
+  };
+  el.querySelectorAll<HTMLButtonElement>('[data-share]').forEach((b) => b.onclick = () => { const s = info.shares.find((x) => x.id === Number(b.dataset.share)); if (s) openShare(s); });
+}
+
+/** A teammate's shared answers. Answers that depend on the seat (right on their seat, not on mine) are not copied. */
+async function openShare(s: Share) {
+  const dlg = $<HTMLDialogElement>('board-dlg');
+  dlg.innerHTML = '<div class="dbody"><p class="muted">Loading the shared answers…</p></div>';
+  if (!dlg.open) dlg.showModal();
+  const fail = (msg: string) => { dlg.innerHTML = `<div class="dbody"><p class="err">${esc(msg)}</p><button class="btn" id="sh-close">Close</button></div>`; $('sh-close').onclick = () => dlg.close(); };
+  let x: SharedAnswers;
+  try { x = await api<SharedAnswers>('shared', { token: st.token, id: s.id }); } catch (e) { return fail((e as Error).message); }
+  const m = ALL.find((y) => y.id === x.act);
+  const ws = m?.worksheet;
+  const plan = (vals: Record<string, string>) => (m && ws ? copyPlan(ws, vals, recheckOn(x.seat, m, vals)?.verdicts ?? {}, autoScore(ws, vals, { facts, hosts }).verdicts) : null);
+  const canCopy = !isTrainer() && !x.mine && !!ws && unlocked(m!.day) && activityOpen(m!.day);
+  const why = isTrainer() || !m ? '' : x.mine ? 'These are your own answers, as your teammates see them.' : !unlocked(m.day) ? `Day ${m.day} is still locked for you, so you cannot copy yet.` : !activityOpen(m.day) ? esc(gateReason(m.day)) : '';
+  const p0 = plan(x.values);
+  dlg.innerHTML = sharedHtml(x, m, p0, canCopy, why, ws ? st.ws[ws.id] ?? {} : {});
+  $('sh-close').onclick = () => dlg.close();
+  $('sh-open')?.addEventListener('click', () => { nbTab = 'ws'; dlg.close(); });
+  $('sh-copy')?.addEventListener('click', async () => {
+    const b = $<HTMLButtonElement>('sh-copy'); b.disabled = true; b.textContent = 'Copying…';
+    let fresh: SharedAnswers;
+    try { fresh = await api<SharedAnswers>('shared', { token: st.token, id: s.id, copy: true, fields: Object.keys(p0?.copy ?? {}).length }); }
+    catch (e) { $('sh-err').textContent = (e as Error).message; b.disabled = false; b.textContent = 'Copy into my worksheet'; return; }
+    const p = plan(fresh.values)!;
+    offerDone([s]);
+    Object.assign((st.ws[ws!.id] ??= {}), p.copy);
+    showMarks[ws!.id] = false;
+    save(st);
+    dlg.close();
+    const n = Object.keys(p.copy).length;
+    toast(`⧉ Copied ${n} answer${n === 1 ? '' : 's'} from ${esc(x.name)}.${p.seatOnly.length ? ` Find the ${p.seatOnly.length} seat-specific answer${p.seatOnly.length === 1 ? '' : 's'} on your own seat.` : ''} Read each one, then press <b>Check my answers</b>.`);
+    nbTab = 'ws';
+    if (onWork() && mission().id === m!.id) { showPane('nb'); renderNotebook(); renderStatusbar(); showReady(m!, true); } else go(`#/m/${m!.id}`);
+  });
+}
+
+// ------------------------------------------------------------------ team: the fill-in offer and "ready to submit"
+// When a teammate shares the activity I am on (when I open it, or while I work on it), a modal offers to fill in my whole
+// worksheet with their answers. Each offer is answered once (per share, per account, on this computer).
+const offerKey = () => `ctm-share-offer:${st?.email ?? ''}`;
+function offersDone(): Record<string, number> { try { return JSON.parse(localStorage.getItem(offerKey()) || '{}'); } catch { return {}; } }
+function offerDone(list: Share[]) {
+  const o = offersDone();
+  for (const s of list) o[s.id] = s.t;
+  try { localStorage.setItem(offerKey(), JSON.stringify(o)); } catch { /* storage blocked: the offer may show again */ }
+}
+const dlgBusy = () => ['board-dlg', 'submit-dlg', 'video-dlg', 'menu-dlg', 'report-dlg', 'signin'].some((id) => $<HTMLDialogElement>(id)?.open);
+let offering = false;
+async function maybeOffer() {
+  if (offering || !st?.token || !onWork() || isTrainer() || dlgBusy() || !$('watch').hidden) return;
+  const m = mission(), ws = m.worksheet;
+  if (!isActivity(m) || !ws || !activityOpen(m.day) || !unlocked(m.day)) return;
+  const info = social.info();
+  if (!info?.team || !info.shareDays.includes(m.day)) return;
+  const done = offersDone();
+  const list = info.shares.filter((s) => !s.mine && s.act === m.id && done[s.id] !== s.t);
+  if (!list.length) return;
+  offering = true;
+  try { await offerShare(m, list); } finally { offering = false; }
+}
+
+async function offerShare(m: Mission, list: Share[]) {
+  const ws = m.worksheet!;
+  const plan = (x: SharedAnswers) => copyPlan(ws, x.values, recheckOn(x.seat, m, x.values)?.verdicts ?? {}, autoScore(ws, x.values, { facts, hosts }).verdicts);
+  let got: (SharedAnswers | null)[];
+  try { got = await Promise.all(list.map((s) => api<SharedAnswers>('shared', { token: st.token, id: s.id }).catch(() => null))); } catch { return; }
+  const mine = () => st.ws[ws.id] ?? {};
+  // only offers that would change something
+  const offers: Offer[] = got.filter((x): x is SharedAnswers => !!x).map((x) => ({ x, plan: plan(x) }))
+    .filter((o) => [...Object.keys(o.plan.copy), ...o.plan.seatOnly].some((k) => (mine()[k] ?? '') !== o.x.values[k]));
+  if (!offers.length) { offerDone(list); return; }
+  if (!onWork() || mission().id !== m.id || dlgBusy()) return; // moved on while loading: offer next time
+  offers.sort((a, b) => Object.keys(b.x.values).length - Object.keys(a.x.values).length || b.x.updated - a.x.updated);
+  const dlg = $<HTMLDialogElement>('board-dlg');
+  let pick = 0, withSeat = false;
+  const draw = () => {
+    dlg.innerHTML = offerHtml(m, offers, pick, mine(), withSeat);
+    dlg.querySelectorAll<HTMLInputElement>('input[name="of-who"]').forEach((r) => r.onchange = () => { pick = Number(r.value); withSeat = false; draw(); });
+    const seat = dlg.querySelector<HTMLInputElement>('#of-seat');
+    if (seat) seat.onchange = () => { withSeat = seat.checked; draw(); };
+    $('of-no').onclick = () => dlg.close();
+    $('of-go').onclick = async () => {
+      const b = $<HTMLButtonElement>('of-go'); b.disabled = true; b.textContent = 'Filling in…';
+      const o = offers[pick];
+      let fresh: SharedAnswers;
+      try { fresh = await api<SharedAnswers>('shared', { token: st.token, id: o.x.id, copy: true, fields: Object.keys(o.plan.copy).length + (withSeat ? o.plan.seatOnly.length : 0) }); }
+      catch (e) { $('of-err').textContent = (e as Error).message; b.disabled = false; b.textContent = 'Fill in my worksheet'; return; }
+      const f: Offer = { x: fresh, plan: plan(fresh) };
+      st.ws[ws.id] = filledAfter(ws, mine(), f, withSeat);
+      showMarks[ws.id] = false;
+      save(st);
+      dlg.close();
+      nbTab = 'ws'; showPane('nb'); renderNotebook(); renderStatusbar();
+      toast(`⧉ Your worksheet is filled in with ${esc(fresh.name)}'s answers.`);
+      showReady(m, true);
+    };
+  };
+  draw();
+  dlg.addEventListener('close', () => offerDone(list), { once: true }); // filled or "Not now": asked once
+  dlg.showModal();
+}
+
+/** "Every answer is filled in: ready to submit" (or what is still empty, right after a fill). Once per worksheet per session, unless forced. */
+const readyShown = new Set<string>();
+function showReady(m: Mission, force = false) {
+  const ws = m.worksheet;
+  if (!ws || !isActivity(m) || isTrainer() || dlgBusy()) return;
+  const vals = st.ws[ws.id] ?? {};
+  const complete = !emptyKeys(ws, vals).length;
+  if (!force && (!complete || readyShown.has(ws.id))) return;
+  const sub = mySubs?.latest[m.id];
+  if (!force && sub && !mySubs?.redo[m.id]) return; // already submitted: no reminder while typing
+  if (complete) readyShown.add(ws.id);
+  const dlg = $<HTMLDialogElement>('board-dlg');
+  dlg.innerHTML = readyHtml(m, vals, (st.done[m.id] ?? []).filter((id) => m.steps.some((s) => s.id === id)).length, !!sub);
+  dlg.showModal();
+  $('rd-ok')?.addEventListener('click', () => dlg.close());
+  $('rd-later')?.addEventListener('click', () => dlg.close());
+  $('rd-check')?.addEventListener('click', () => { dlg.close(); $('btn-check').click(); });
+  $('rd-submit')?.addEventListener('click', () => {
+    dlg.close();
+    if (!$('btn-submit').hidden) openSubmit();
+    else toast('Submitting needs the online lab: sign in online, and your trainer must have updated the lab server.');
+  });
+}
+
+// ------------------------------------------------------------------ teams page (trainer)
+let teamDraft: TeamDraft = { teams: {}, extra: [] };
+async function renderTeams(refresh = false) {
+  const v = $('view');
+  if (board) drawTeams();
+  else v.innerHTML = '<div class="pagehead"><div class="kicker">Trainer board</div><h2>Teams</h2><div class="meta">Loading the class…</div></div>';
+  if (board && !refresh) return;
+  try { board = await api<BoardData>('board', { token: st.token }); }
+  catch (e) { if (route.name === 'teams' && !$('view').querySelector('.tcols')) v.innerHTML = `<div class="pagehead"><h2>Teams</h2></div><p class="note">${esc((e as Error).message)}</p>`; return; }
+  drawTeams();
+}
+function drawTeams() {
+  if (route.name !== 'teams' || !board) return;
+  const v = $('view'), b = board, top = v.scrollTop;
+  v.innerHTML = teamsHtml(b, PACKS, teamDraft);
+  v.scrollTop = top;
+  document.body.dataset.route = location.hash; // drawn (for the e2e tests)
+  const move = (email: string, team: string) => { teamDraft.teams[email] = team; drawTeams(); };
+  v.querySelectorAll<HTMLSelectElement>('[data-move]').forEach((sel) => sel.onchange = () => move(sel.dataset.move!, sel.value));
+  v.querySelectorAll<HTMLElement>('.tcard').forEach((c) => {
+    c.ondragstart = (e) => { e.dataTransfer!.setData('text/plain', c.dataset.email!); e.dataTransfer!.effectAllowed = 'move'; c.classList.add('dragging'); };
+    c.ondragend = () => c.classList.remove('dragging');
+  });
+  v.querySelectorAll<HTMLElement>('.tcol').forEach((col) => {
+    col.ondragover = (e) => { e.preventDefault(); col.classList.add('over'); };
+    col.ondragleave = () => col.classList.remove('over');
+    col.ondrop = (e) => { e.preventDefault(); col.classList.remove('over'); const em = e.dataTransfer!.getData('text/plain'); if (em) move(em, col.dataset.team!); };
+  });
+  v.querySelectorAll<HTMLInputElement>('[data-rename]').forEach((inp) => inp.onchange = () => {
+    const old = inp.dataset.rename!, name = inp.value.replace(/\s+/g, ' ').trim();
+    const taken = teamList(b.trainees, teamDraft).includes(name);
+    if (!name || name === old || taken || /^announcements$/i.test(name)) {
+      if (taken && name !== old) toast(`There is already a team called ${esc(name)}. Drag the members across instead.`);
+      if (/^announcements$/i.test(name)) toast('"Announcements" cannot be a team name.');
+      inp.value = old; return;
+    }
+    for (const t of b.trainees) if ((t.email in teamDraft.teams ? teamDraft.teams[t.email] : t.team ?? '') === old) teamDraft.teams[t.email] = name;
+    teamDraft.extra = teamDraft.extra.map((x) => (x === old ? name : x));
+    drawTeams();
+  });
+  $('tm-new').onclick = () => {
+    const names = teamList(b.trainees, teamDraft);
+    let i = names.length + 1;
+    while (names.includes(`Team ${i}`)) i++;
+    teamDraft.extra.push(`Team ${i}`);
+    drawTeams();
+  };
+  $('tm-balance').onclick = () => {
+    const n = Math.max(1, Math.round(Number(($('tm-n') as HTMLInputElement).value) || 2));
+    teamDraft = { teams: balance(b.trainees, PACKS, n, teamList(b.trainees, { teams: {}, extra: [] })), extra: [] };
+    drawTeams();
+    toast(`Balanced the class into ${n} team${n === 1 ? '' : 's'}. Check them, then press <b>Save</b>.`);
+  };
+  $('tm-undo').onclick = () => { teamDraft = { teams: {}, extra: [] }; drawTeams(); };
+  $('tm-save').onclick = async () => {
+    const list = teamChanges(b.trainees, teamDraft);
+    if (!list.length) return;
+    const btn = $<HTMLButtonElement>('tm-save'); btn.disabled = true; btn.textContent = 'Saving…';
+    try { await api('teamSet', { token: st.token, changes: list }); }
+    catch (e) { toast(esc((e as Error).message)); btn.disabled = false; btn.textContent = 'Save'; return; }
+    for (const c of list) { const t = b.trainees.find((x) => x.email === c.email); if (t) t.team = c.team; }
+    teamDraft = { teams: {}, extra: teamDraft.extra.filter((x) => !b.trainees.some((t) => t.team === x)) };
+    drawTeams();
+    toast(`Saved: ${list.length} trainee${list.length === 1 ? '' : 's'} moved. Their team rooms update within seconds.`);
+  };
+}
+
 // ------------------------------------------------------------------ start
 const openDays = () => DAYS.filter((p) => unlocked(p.day)).length;
 function announceUnlock(before: number) {
@@ -1030,8 +1263,13 @@ function pollGate() {
   api<StatusReply>('status', { token: st.token, mission: !onWork() ? 'Browsing the lab' : m.kind === 'workspace' ? 'Workspace' : m.title })
     .then((r) => { setGate(r.openDays, r.trainer); setSubs((r as StatusReply & { subs?: MySubs }).subs); social.update(r); }).catch(() => { /* keep the last known gate */ });
 }
-const social = new Social(api, () => st?.token, () => st?.email ?? '', toast, pollGate);
+const social = new Social(api, () => st?.token, () => st?.email ?? '', toast, pollGate, {
+  actTitle: (id) => ALL.find((m) => m.id === id)?.title ?? id,
+  openShare: (s) => openShare(s),
+  onShares: () => { renderTeamBar(); void maybeOffer(); },
+});
 setInterval(pollGate, 60000);
+setInterval(() => void maybeOffer(), 15000); // an offer skipped while another dialog or the video was open
 window.addEventListener('focus', pollGate);
 onSave((s) => { if (s === st) stamp(); if (s === st && s.token) queueSync(s, progressSummary()); });
 window.addEventListener('pagehide', flushOnExit);

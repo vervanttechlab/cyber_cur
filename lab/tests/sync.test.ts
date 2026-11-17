@@ -15,7 +15,7 @@ const roster = (g: any, ...rows: unknown[][]) => rows.forEach((r) => g.ss.getShe
 describe('CTM Virtual Lab sync (Code.gs)', () => {
   it('setup creates the tabs', () => {
     const g = fresh();
-    expect([...g.ss.sheets.keys()].sort()).toEqual(['Chat', 'Progress', 'Redo', 'Roster', 'Sessions', 'Settings', 'State', 'Submissions', 'Sync Log']);
+    expect([...g.ss.sheets.keys()].sort()).toEqual(['Chat', 'Copies', 'Progress', 'Redo', 'Roster', 'Sessions', 'Settings', 'Shares', 'State', 'Submissions', 'Sync Log']);
     expect(g.ss.getSheetByName('Roster').rows[0]).toEqual(['Email', 'Full Name', 'Seat', 'Allowed (YES/NO)', 'Team']);
     expect(g.post({ action: 'info' })).toMatchObject({ ok: true, open: true });
   });
@@ -83,10 +83,10 @@ describe('CTM Virtual Lab sync (Code.gs)', () => {
     g.setSetting('Require Roster', 'YES');
     set.rows = set.rows.filter((r: unknown[]) => r[0] !== 'Open Days'); // a Sheet made before Open Days existed
     g.ctx.setup();
-    expect(set.rows.map((r: unknown[]) => r[0])).toEqual(['Setting', 'Lab Status', 'Require Roster', 'Trainer Emails', 'Open Days']);
+    expect(set.rows.map((r: unknown[]) => r[0])).toEqual(['Setting', 'Lab Status', 'Require Roster', 'Trainer Emails', 'Answer Sharing', 'Open Days']);
     expect(set.rows.find((r: unknown[]) => r[0] === 'Require Roster')[1]).toBe('YES');
     g.ctx.setup(); // running it again adds nothing
-    expect(set.rows).toHaveLength(5);
+    expect(set.rows).toHaveLength(6);
   });
 
   // A state whose text at a 45,000-character cell boundary starts with - (e.g. "-rw-r--r--" or a "----" table rule)

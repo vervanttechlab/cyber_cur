@@ -119,19 +119,41 @@ CLASS REPORT (trainer accounts only: menu ☰ > Class report, or the button on t
   NEEDS the Code.gs of 7 Nov 2026 or later: paste it and deploy a new version (see UPDATING Code.gs above).
   With an older Code.gs the report says "Unknown action".
 
-TEAMS, WHO IS ONLINE AND TEAM CHAT
-  Teams come from the Roster tab, column E "Team" (e.g. Blue Team). Type the same team name for every
-  member. A transfer = change that one cell; the lab picks it up within a minute. Empty = no team yet.
-  In the lab, every signed-in account gets a "👥 Team" button (trainers: "👥 Teams"):
-    Online ... trainees see their own team members and the trainers; trainers see everyone, with the
-               activity each person is on. Online = used the lab in the last 2–3 minutes.
-    Chat ..... each team has a private chat. Trainers can read and post in every team and post
-               Announcements (trainees read Announcements and get a notice; only trainers post there).
-               Messages arrive within about 5 seconds. Max 500 characters, one message per 1.5 seconds.
-  Every message is kept in the Chat tab (time, channel, email, name, message). A trainer can press
-  "Hide" on a message: it disappears for everyone and is marked Hidden = YES in the Chat tab.
-  NEEDS the Code.gs of 7 Nov 2026 (chat) or later: paste it, run setup once (adds the Team column
-  header and the Chat tab), and deploy a new version.
+TEAMS: TEAM ROOMS, LIVE TEAM CHAT AND ANSWER SHARING (update of 17 Nov 2026)
+  Teams help trainees help each other. Each team has one room in the lab (the "👥 Team" button; trainers:
+  "👥 Teams") with three tabs:
+    Chat ......... the team's private chat. New messages arrive within about 2 seconds while the room is
+                   open ("Ana is typing…" shows too), and as a notice and a red badge while it is closed.
+                   Max 500 characters, one message per 1.5 seconds.
+    Members ...... everyone in the team, online or not, and the activity each one is on.
+                   Online = used the lab in the last 2–3 minutes.
+    Shared ....... the answers members share with the team (see ANSWER SHARING).
+  Announcements from a trainer are pinned at the top of every team room (no separate chat any more).
+  Trainers pick any team's room from the list at the top, read and post there, and tick
+  "📣 Announce to every team" to post an announcement. "Hide" on a message removes it for everyone
+  (it stays in the Chat tab, marked Hidden = YES). Every message is kept in the Chat tab.
+
+  REARRANGING TEAMS: Trainer board > "👥 Teams" (or the side menu). Drag a trainee to another team, or use
+  "Move to" on their card; "+ New team" adds a team; click a team name to rename it. "Balance" puts the class
+  into N teams that mix trainees who are ahead with trainees who need help (sorted by activities finished,
+  dealt 1, 2, 3, 3, 2, 1…). Nothing changes until you press Save. Save writes the Roster tab, column E "Team"
+  (a trainee who is not in the Roster yet gets a row); trainees see their new team within seconds.
+  You can still type teams into Roster column E by hand: the lab picks that up within a minute.
+
+  ANSWER SHARING: Settings > "Answer Sharing" = the days on which sharing is allowed, e.g. 2 or 2,3 or ALL.
+  Empty = off (for example on assessment days).
+    • A trainee ticks "🤝 Share my answers with <team>" above an activity's worksheet. Teammates then see
+      "Shared by <name>" there and in the Shared tab, and can open the answers (always the latest saved ones).
+    • "Copy N answers into my worksheet" puts them in the teammate's worksheet. Answers that depend on the seat
+      (each seat has its own hosts and evidence, e.g. Activity N.4) are NOT copied: the lab sees they are right
+      on the sharer's seat but not on the copier's, marks them "YOUR SEAT DIFFERS", and the trainee finds them
+      on their own seat. The trainee still presses Check my answers and submits their own work.
+    • Every copy is recorded in the Copies tab (time, who, team, activity, copied from, number of answers) and
+      shows as ⧉ COPIED on the Trainer board (hover for from whom) and in the submission.
+    • The Shares tab lists who shares which activity (ON / OFF). Trainers can open shared answers but do not
+      share or copy. Only members of the same team see a share; a trainee who moves team takes it along.
+  UPDATE: paste the new Code.gs, run setup once (adds the "Answer Sharing" setting and the Shares and Copies
+  tabs), and deploy a new version. Until then the lab says "The team room is not switched on yet".
 
 DAY LOCKING (built into the lab)
   Day 2 is always open. Day 3 unlocks when all Day 2 activities are finished; Day 4 after Day 3.

@@ -8,7 +8,15 @@ import { esc, dayTitle } from './pages';
 import { stampOf } from '../ui/activity';
 
 export interface Presence { mission: string; ago: number }   // ago: seconds since the trainee's lab last checked in
-export interface BoardData { trainees: ReportTrainee[]; openDays: number[]; generated: number; subs: BoardSub[]; redo: { email: string; act: string; note: string; at: number }[]; presence?: Record<string, Presence> }
+/** A trainee copied a teammate's shared answers into their worksheet (Copies tab). */
+export interface CopyRec { email: string; act: string; day: number; from: string; fromName: string; at: number; n: number }
+export interface BoardData {
+  trainees: ReportTrainee[]; openDays: number[]; generated: number; subs: BoardSub[]; redo: { email: string; act: string; note: string; at: number }[]; presence?: Record<string, Presence>;
+  shareDays?: number[]; copies?: CopyRec[];
+}
+/** "Copied 4 answers from Ana Reyes (Nov 17, 2:14 PM)", one per copy. */
+export const copyText = (list: CopyRec[]) => list.map((c) => `Copied ${c.n} answer${c.n === 1 ? '' : 's'} from ${c.fromName || c.from} (${when(c.at)})`).join('; ');
+const copyTag = (list: CopyRec[]) => (list.length ? `<span class="tag copy" title="${esc(copyText(list))}">⧉ COPIED</span>` : '');
 /** Online = the lab checked in within the last 2.5 minutes (it checks in every minute). */
 export const isOnline = (p?: Presence | null) => !!p && p.ago < 150;
 /** "just now", "12 min ago", "3 h ago", else the date and time. */
@@ -25,7 +33,7 @@ export function lastActive(d: Pick<BoardData, 'generated' | 'presence'>, t: Pick
 export const traineeHref = (email: string, act?: string) => `#/trainee/${encodeURIComponent(email)}${act ? `/${act}` : ''}`;
 export interface Detail {
   history: Omit<SubResult, 'act' | 'day' | 'title' | 'attempts'>[]; attempt: number; latest: boolean;
-  email: string; name: string; seat: number; day: number; act: string; title: string; payload: Payload | null; redo: { note: string; at: number } | null;
+  email: string; name: string; seat: number; day: number; act: string; title: string; payload: Payload | null; redo: { note: string; at: number } | null; copies?: CopyRec[];
 }
 
 const actNo = (m: Mission) => (m.title.match(/^Activity (\d+\.\d+)/) ?? [])[1] ?? m.id;
@@ -40,18 +48,19 @@ function cell(d: BoardData, t: ReportTrainee, m: Mission): string {
   const s = d.subs.find((x) => x.email === t.email && x.act === m.id);
   const redo = d.redo.find((x) => x.email === t.email && x.act === m.id);
   const steps = (t.done[m.id] ?? []).filter((id) => m.steps.some((x) => x.id === id)).length;
+  const cp = copyTag((d.copies ?? []).filter((c) => c.email === t.email && c.act === m.id));
   const started = !!t.started[m.id] || steps > 0;
   if (!s) {
-    if (!started && !redo) return '<td class="bc empty"><span class="muted">–</span></td>';
+    if (!started && !redo && !cp) return '<td class="bc empty"><span class="muted">–</span></td>';
     // not submitted yet: the live work (steps done, answers typed), green dot = working on it right now
     const p = d.presence?.[t.email], now = isOnline(p) && p!.mission === m.title;
     const filled = m.worksheet ? t.filled[m.worksheet.id] ?? 0 : 0;
     return `<td class="bc"><button class="bcell live" data-email="${esc(t.email)}" data-act="${m.id}" title="${esc(`${t.name || t.email} · ${m.title} · not submitted yet${now ? ' · working on it now' : ''} · click to watch the live work`)}">
-      ${now ? '<span class="dot on" aria-label="working now"></span>' : ''}${redo ? '<span class="tag warn">REDO</span>' : ''}<span class="small">${steps}/${m.steps.length} steps${filled ? ` · ${filled} ans` : ''}</span></button></td>`;
+      ${now ? '<span class="dot on" aria-label="working now"></span>' : ''}${redo ? '<span class="tag warn">REDO</span>' : ''}${cp}<span class="small">${steps}/${m.steps.length} steps${filled ? ` · ${filled} ans` : ''}</span></button></td>`;
   }
   const tag = redo ? '<span class="tag warn">REDO</span>' : s.verdict === 'C' ? '<span class="tag good">C</span>' : s.verdict === 'NYC' ? '<span class="tag bad">NYC</span>' : '<span class="tag info">NEW</span>';
   return `<td class="bc"><button class="bcell" data-email="${esc(t.email)}" data-act="${m.id}" title="${esc(`${t.name || t.email} · ${m.title} · attempt ${s.attempts} · ${when(s.ts)}`)}">
-    <span class="mono">${s.score}/${s.max}</span>${tag}${s.attempts > 1 ? `<span class="small muted">×${s.attempts}</span>` : ''}${s.late ? '<span class="tag">LATE</span>' : ''}</button></td>`;
+    <span class="mono">${s.score}/${s.max}</span>${tag}${s.attempts > 1 ? `<span class="small muted">×${s.attempts}</span>` : ''}${s.late ? '<span class="tag">LATE</span>' : ''}${cp}</button></td>`;
 }
 
 export function boardHtml(d: BoardData, packs: ScenarioPack[], day: number): string {
@@ -73,13 +82,13 @@ export function boardHtml(d: BoardData, packs: ScenarioPack[], day: number): str
     <div class="boardbar"><label class="small muted">Day <select id="bd-day">${packs.filter((x) => x.day > 0).map((x) => `<option value="${x.day}" ${x.day === day ? 'selected' : ''}>Day ${x.day} · ${esc(dayTitle(x))}${d.openDays.includes(x.day) ? ' (open today)' : ''}</option>`).join('')}</select></label>
       <span class="grow"></span>
       <button class="btn primary" id="bd-next" ${q.length ? '' : 'disabled'}>Grade next (${q.length} waiting${qDay !== q.length ? `, ${qDay} on this day` : ''})</button>
-      <button class="btn" id="bd-refresh">Refresh</button><button class="btn" id="bd-csv">Download grades (CSV)</button><button class="btn" id="bd-log">Activity log (CSV)…</button><button class="btn quiet" id="bd-report">Class report</button></div>
+      <a class="btn" href="#/teams" title="Rearrange the teams">👥 Teams</a><button class="btn" id="bd-refresh">Refresh</button><button class="btn" id="bd-csv">Download grades (CSV)</button><button class="btn" id="bd-log">Activity log (CSV)…</button><button class="btn quiet" id="bd-report">Class report</button></div>
     <div class="bstats"><span><b>${online}</b> online now</span><span><b>${new Set(subsDay.map((s) => s.email)).size}</b> of ${d.trainees.length} trainees submitted</span><span><b>${subsDay.length}</b> submissions</span>
       <span><b>${subsDay.filter((s) => s.verdict === 'C').length}</b> competent</span><span><b>${subsDay.filter((s) => !s.verdict).length}</b> to grade</span>
       <span><b>${d.redo.filter((r) => r.act.startsWith(`d${day}-`)).length}</b> returned for redo</span></div>
     <div class="bscroll"><table class="btable"><thead><tr><th>Trainee</th>${acts.map((m) => `<th title="${esc(m.title)}">${actNo(m)}<div class="small">${esc(m.title.replace(/^Activity \d+\.\d+ · /, ''))}</div></th>`).join('')}</tr></thead>
       <tbody>${rows || `<tr><td colspan="${acts.length + 1}" class="muted">No trainees yet: add them to the Roster tab of the Google Sheet.</td></tr>`}</tbody></table></div>
-    <p class="small muted"><span class="dot on"></span> working on it now · "3/5 steps · 4 ans" = not submitted yet: steps done and answers typed so far · Score = answers the lab checks automatically. <span class="tag info">NEW</span> waiting for your verdict · <span class="tag good">C</span> Competent · <span class="tag bad">NYC</span> Not Yet Competent · <span class="tag warn">REDO</span> returned to the trainee · ×2 = attempts (the latest counts) · LATE = submitted while the day's Activities were closed.</p>`;
+    <p class="small muted"><span class="dot on"></span> working on it now · "3/5 steps · 4 ans" = not submitted yet: steps done and answers typed so far · Score = answers the lab checks automatically. <span class="tag info">NEW</span> waiting for your verdict · <span class="tag good">C</span> Competent · <span class="tag bad">NYC</span> Not Yet Competent · <span class="tag warn">REDO</span> returned to the trainee · ×2 = attempts (the latest counts) · LATE = submitted while the day's Activities were closed · <span class="tag copy">⧉ COPIED</span> copied a teammate's shared answers (hover for from whom).</p>`;
 }
 
 /** Readable label of each answer key of a worksheet. */
@@ -130,6 +139,7 @@ export function detailHtml(x: Detail, m: Mission | undefined, recheck: Recheck, 
         <div><div class="kicker">Submitted</div><b>${esc(when(cur.ts))}</b>${cur.late ? ' <span class="tag">LATE</span>' : ''}</div>
       </div>
       ${x.latest ? '' : '<p class="note">You are looking at an earlier attempt. Grading saves on this attempt.</p>'}
+      ${x.copies?.length ? `<p class="note"><b>⧉ Copied from a teammate.</b> ${esc(copyText(x.copies))}. Check that the trainee understands these answers.</p>` : ''}
       ${!p ? '<p class="note">The submitted work could not be read.</p>' : ''}
       <div class="dcols">
         <section><div class="label">Worksheet answers</div>${answersHtml(m, p?.ws ?? {}, recheck)}

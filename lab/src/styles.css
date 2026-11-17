@@ -312,7 +312,7 @@ dialog::backdrop { background: rgba(14,26,46,.7); }
 .seg2 button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
 
 /* Who is online + team chat (side panel) */
-.social { position: fixed; top: 48px; right: 8px; bottom: 8px; width: min(360px, calc(100vw - 16px)); z-index: 40; background: var(--panel); border: 1px solid var(--line-strong);
+.social { position: fixed; top: 48px; right: 8px; bottom: 8px; width: min(400px, calc(100vw - 16px)); z-index: 40; background: var(--panel); border: 1px solid var(--line-strong);
   box-shadow: 0 12px 40px rgba(14,26,46,.35); display: flex; flex-direction: column; overflow: hidden; }
 .soc-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--app); color: var(--app-ink); font-size: 14px; }
 .soc-x { background: none; border: 0; color: inherit; font-size: 22px; line-height: 1; cursor: pointer; }
@@ -340,6 +340,65 @@ dialog::backdrop { background: rgba(14,26,46,.7); }
 .soc-send textarea { flex: 1; resize: none; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line-strong); }
 .soc-badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; text-align: center; }
 .soc-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); vertical-align: middle; }
+
+/* Team room: head, pinned announcement, typing, shares */
+.soc-head select { flex: 1; min-width: 0; font-size: 13px; padding: 4px 6px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--ink); }
+.soc-head { gap: 8px; }
+.soc-count { margin-left: auto; font-size: 12px; opacity: .85; white-space: nowrap; }
+.soc-pin { padding: 8px 12px; background: var(--warn-bg); border-bottom: 1px solid var(--line); max-height: 30vh; overflow: auto; }
+.soc-pin-msg { display: flex; gap: 8px; font-size: 13px; }
+.soc-pin-i { font-size: 16px; line-height: 1.2; }
+.soc-pin details { margin-top: 4px; font-size: 12px; }
+.soc-pin summary { cursor: pointer; }
+.soc-on.off { background: transparent; border: 1.5px solid var(--muted); }
+.soc-typing { min-height: 16px; font-size: 12px; color: var(--muted); font-style: italic; }
+.soc-send { flex-direction: column; align-items: stretch; }
+.soc-row { display: flex; gap: 6px; align-items: flex-end; }
+.soc-ann { font-size: 12px; display: flex; gap: 6px; align-items: center; color: var(--warn); font-weight: 600; }
+.soc-shares { list-style: none; margin: 0 0 6px; padding: 0; }
+.soc-shares li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.social a { color: var(--accent); }
+
+/* Worksheet: share with my team */
+.teambar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 10px; margin: 0 0 10px; background: var(--accent-soft); border-left: 3px solid var(--accent); font-size: 13px; }
+.teambar.off { background: var(--panel-2); border-left-color: var(--line-strong); color: var(--muted); display: block; }
+.tb-share { display: flex; gap: 6px; align-items: center; font-weight: 600; cursor: pointer; }
+.tb-share input { width: 16px; height: 16px; }
+.tb-others { font-size: 12.5px; }
+.sh-table tr.seat td { background: var(--warn-bg); }
+.tag.copy { color: var(--bad); border-color: var(--bad); background: var(--bad-bg); }
+
+/* Fill-in offer and "ready to submit" (modals over the work page) */
+.bdlg:has(.offer), .bdlg:has(.ready) { width: min(640px, 94vw); }
+.offer details { margin: 4px 0; font-size: 13px; }
+.offer details summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.of-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 6px 0 10px; }
+.of-sum > div { background: var(--panel-2); border: 1px solid var(--line); border-left: 4px solid var(--accent); padding: 8px 10px; }
+.of-sum .big { font-size: 22px; }
+.of-sum .big.no { color: var(--warn); }
+.of-pick { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.of-seat { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; background: var(--warn-bg); padding: 8px 10px; margin: 4px 0; }
+.of-left { margin: 4px 0 10px 18px; font-size: 13px; }
+
+/* Teams page (trainer) */
+.tm-n { width: 56px; height: var(--tap); border: 1px solid var(--line-strong); padding: 0 6px; margin: 0 4px; }
+.boardbar .warn { color: var(--warn); font-weight: 600; }
+.tcols { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; align-items: start; margin-bottom: 10px; }
+.tcol { background: var(--panel); border: 1px solid var(--line-strong); border-top: 4px solid var(--accent); min-height: 120px; }
+.tcol.none { border-top-color: var(--line-strong); background: var(--panel-2); }
+.tcol.over { outline: 2px dashed var(--accent); outline-offset: -4px; background: var(--accent-soft); }
+.tcol header { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.tc-name { flex: 1; min-width: 0; font: inherit; font-weight: 700; border: 1px solid transparent; background: transparent; color: var(--ink); padding: 3px 4px; }
+.tc-name:hover, .tc-name:focus { border-color: var(--line-strong); background: var(--panel); }
+.tlist { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+.tcard { background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; cursor: grab; font-size: 13px; }
+.tcard.moved { border-color: var(--warn); background: var(--warn-bg); }
+.tcard.dragging { opacity: .5; }
+.tc-top { display: flex; align-items: center; gap: 6px; }
+.tc-was { color: var(--warn); }
+.tc-move { display: flex; gap: 6px; align-items: center; margin-top: 4px; color: var(--muted); }
+.tc-move select { font-size: 12px; padding: 2px 4px; border: 1px solid var(--line-strong); background: var(--panel); color: var(--ink); max-width: 150px; }
+.tc-empty { padding: 10px; text-align: center; }
 
 /* Class report (trainer accounts only) */
 #report-dlg { width: min(1180px, 96vw); max-height: 92vh; }

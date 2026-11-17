@@ -14,8 +14,13 @@
  * API: POST a JSON body (Content-Type text/plain) with { action, ... }:
  *   info · requestCode {email,name} · verify {email,code,name} · load {token} · save {token,state,summary} · status {token}
  *   report {token}  (trainer accounts only: the Class report in the lab)
- *   status {token,mission} also records who is online and returns the online list and chat versions
- *   chatGet {token,channel,ver} · chatSend {token,channel,text} · chatHide {token,id} (trainer)
+ *   status {token,mission} also records who is online and returns the online list, chat versions and the team's shared answers
+ *   Team room (the "👥 Team" panel: members, team chat, shared answers, pinned trainer announcements):
+ *   room {token,team?,ver?} (polled every 2 s while open; { same: true } + members when nothing changed) · typing {token,team?,stop?}
+ *   chatSend {token,channel,text} · chatHide {token,id} (trainer)
+ *   share {token,day,act,ws,on} (share my answers of one activity with my team) · shared {token,id,copy?,fields?} (a teammate's
+ *   shared answers; copy = the trainee copies them into their worksheet, recorded in the Copies tab and flagged on the board)
+ *   teamSet {token,changes:[{email,team}]} (trainer: rearrange the teams; writes Roster column E)
  *   submit {token,day,act,title,score,max,payload} (a trainee turns in an activity; every attempt is kept) · mine {token}
  *   board {token} · submission {token,email,act,attempt?} · grade {token,email,act,verdict,feedback,attempt?} ·
  *   redo {token,email,act,note,cancel?}  (trainer accounts: the Trainer board in the lab)
@@ -32,7 +37,7 @@ const APP = {
   SEATS: 40,                   // seat numbers 1..SEATS (each seat has its own lab hosts)
 };
 const SHEETS = { SETTINGS: 'Settings', ROSTER: 'Roster', PROGRESS: 'Progress', STATE: 'State', SESSIONS: 'Sessions', LOG: 'Sync Log', CHAT: 'Chat',
-  SUBS: 'Submissions', REDO: 'Redo' };
+  SUBS: 'Submissions', REDO: 'Redo', SHARES: 'Shares', COPIES: 'Copies' };
 // Submissions: one row per attempt. Columns 1-14 are light (read for lists); the work itself (JSON) is split over columns 15+.
 const SUBS_HEAD = ['Time', 'Email', 'Name', 'Seat', 'Day', 'Activity ID', 'Activity', 'Attempt', 'Auto Score', 'Auto Max',
   'Verdict (C / NYC)', 'Trainer Feedback', 'Graded At', 'Late (Activities closed)', 'Submitted work (JSON, split across cells)'];
@@ -44,6 +49,11 @@ const ONLINE_MS = 150000;      // seen in the last 2.5 minutes = online (the lab
 const CHAT = { MAX_LEN: 500, KEEP: 100, MIN_GAP_MS: 1500, ANNOUNCE: 'Announcements' };
 const ROSTER_HEAD = ['Email', 'Full Name', 'Seat', 'Allowed (YES/NO)', 'Team'];
 const CHAT_HEAD = ['Time', 'Channel', 'Email', 'Name', 'Message', 'ID', 'Hidden (YES = hidden by the trainer)'];
+// Team room: typing shows for 5 s; the newest 3 announcements are pinned in every team room.
+const ROOM = { TYPING_MS: 5000, PINNED: 3, TEAM_LEN: 40 };
+// Answer sharing: one row per trainee and activity (the latest ON/OFF); the answers themselves are read from the owner's saved state.
+const SHARE_HEAD = ['ID', 'Time', 'Email', 'Name', 'Seat', 'Day', 'Activity ID', 'Worksheet ID', 'Status (ON / OFF)'];
+const COPY_HEAD = ['Time', 'Email', 'Name', 'Team', 'Day', 'Activity ID', 'Copied From (email)', 'Copied From (name)', 'Answers Copied'];
 // Days 5–15 are appended after the original columns, so existing columns never move.
 const LATER_DAYS = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 const PROGRESS_HEAD = ['Email', 'Full Name', 'Seat', 'Last Sync', 'Highest Day Unlocked', 'Day 2 Activities', 'Day 2 Checked Score',
@@ -54,6 +64,7 @@ const SETTINGS_SPEC = [
   ['Open Days', '', 'Days whose Activities trainees can do today, e.g. 2 or 2,3 or ALL. Empty = Activities closed (Practice and Workspace stay open). Trainer Emails always see everything.'],
   ['Require Roster', 'NO', 'YES = only emails listed in the Roster tab (Allowed = YES) can sign in.'],
   ['Trainer Emails', '', 'Comma-separated. These accounts see every day unlocked (for testing and demonstrations).'],
+  ['Answer Sharing', '', 'Days on which team members may share activity answers and copy them from each other, e.g. 2,3 or ALL. Empty = sharing off. Every copy is listed in the Copies tab and flagged on the Trainer board.'],
 ];
 
 // ------------------------------------------------------------------ web entry points
@@ -64,15 +75,15 @@ function doGet() {
 function doPost(e) {
   let req;
   try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (err) { return json_({ ok: false, error: 'Bad request.' }); }
-  // chatGet only reads (from the cache), so it does not wait for the lock: chat stays quick for a full class
-  const lock = req.action === 'chatGet' ? null : LockService.getScriptLock();
+  // room and typing only read and write the cache, so they do not wait for the lock: the team room stays quick for a full class
+  const lock = req.action === 'room' || req.action === 'typing' ? null : LockService.getScriptLock();
   try {
     // Inside the try: an uncaught error makes Google answer with an HTML page that has no CORS header, which the
     // browser reports as "blocked by CORS policy" instead of a message the trainee can read.
     if (lock && !lock.tryLock(25000)) return json_({ ok: false, busy: true, error: 'The lab server is busy. Please try again in a few seconds.' });
     const ss = ss_();
     const handlers = { info: info_, requestCode: requestCode_, verify: verify_, load: load_, save: save_, status: status_, report: report_,
-      chatGet: chatGet_, chatSend: chatSend_, chatHide: chatHide_,
+      room: room_, typing: typing_, chatSend: chatSend_, chatHide: chatHide_, share: share_, shared: shared_, teamSet: teamSet_,
       submit: submit_, mine: mine_, board: board_, submission: submission_, grade: grade_, redo: redo_,
       trainee: trainee_, classLog: classLog_ };
     const h = handlers[req.action];
@@ -95,7 +106,9 @@ function info_(ss) {
 function status_(ss, req) {
   const who = auth_(ss, req.token);
   const me = touch_(ss, who, req.mission);
-  return { trainer: who.trainer, openDays: getSettings_(ss).openDays, team: me.team, online: online_(me), chat: chatVersions_(ss, me), subs: mySubs_(ss, who.email) };
+  const s = getSettings_(ss);
+  return { trainer: who.trainer, openDays: s.openDays, shareDays: s.shareDays, team: me.team, online: online_(me), chat: chatVersions_(ss, me), subs: mySubs_(ss, who.email),
+    shares: me.trainer ? [] : teamShares_(ss, me.team, who.email, s.shareDays) };
 }
 
 function requestCode_(ss, req) {
@@ -313,7 +326,7 @@ function board_(ss, req) {
   const redo = [];
   const ro = redoOpen_(ss);
   Object.keys(ro).forEach(function (e) { Object.keys(ro[e]).forEach(function (a) { redo.push({ email: e, act: a, note: ro[e][a].note, at: ro[e][a].at }); }); });
-  return { trainees: rep.trainees, openDays: rep.openDays, generated: rep.generated, subs: subs, redo: redo, presence: presence_() };
+  return { trainees: rep.trainees, openDays: rep.openDays, shareDays: getSettings_(ss).shareDays, generated: rep.generated, subs: subs, redo: redo, presence: presence_(), copies: copies_(ss) };
 }
 
 // ------------------------------------------------------------------ monitoring: one trainee's live work, and everyone's dated activity log
@@ -415,6 +428,7 @@ function submission_(ss, req) {
     history: list.map(function (x) { return { attempt: x.attempt, ts: x.ts, score: x.score, max: x.max, verdict: x.verdict, feedback: x.feedback, gradedAt: x.gradedAt, late: x.late }; }),
     attempt: pick.attempt, latest: pick === list[list.length - 1], email: email, name: pick.name, seat: pick.seat, day: pick.day, act: act, title: pick.title,
     payload: payload, redo: ro,
+    copies: copies_(ss).filter(function (c) { return c.email === email && c.act === act; }),
   };
 }
 
@@ -456,6 +470,9 @@ function touch_(ss, who, mission, known) {
   const pres = JSON.parse(cache.get('PRESENCE') || '{}');
   const old = pres[who.email] || {};
   const r = rosterEntry_(ss, who.email);
+  // a team typed into the Roster by hand: the team room (cached roster) follows at this check-in, not 30 s later
+  const c = roster_(ss).filter(function (x) { return x.email === who.email; })[0];
+  if (((c && c.team) || '') !== ((r && r.team) || '') || (!c && r)) cache.remove('ROSTER');
   let name = (known && known.name) || old.name, seat = (known && known.seat) || old.seat;
   if (!name || !seat) {
     const pr = sheet_(ss, SHEETS.PROGRESS), row = findRow_(pr, who.email);
@@ -525,23 +542,211 @@ function canChat_(ss, me, ch, write) {
   if (channels_(ss, me).indexOf(ch) < 0) throw new Error(me.team || me.trainer ? 'You are not a member of that chat.' : 'You are not in a team yet. Ask your trainer to add your team in the Roster.');
   if (write && ch === CHAT.ANNOUNCE && !me.trainer) throw new Error('Only the trainer can post announcements.');
 }
+/** Who signed in with this token, and their current team (read from the cached roster, so the 2-second room poll stays light). */
 function meOf_(ss, req) {
   const who = auth_(ss, req.token);
-  const r = rosterEntry_(ss, who.email);
-  return { email: who.email, trainer: who.trainer, team: (r && r.team) || '' };
+  const r = roster_(ss).filter(function (x) { return x.email === who.email; })[0];
+  return { email: who.email, trainer: who.trainer, team: (r && r.team) || '', name: (r && r.name) || '' };
 }
 
-/** Messages of one channel. With ver = the version the lab already shows, returns { same: true } when nothing changed. */
-function chatGet_(ss, req) {
+/** The Roster tab (email, name, seat, team), cached for 30 s; a team change from the lab clears it at once. */
+function roster_(ss) {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('ROSTER');
+  if (hit) return JSON.parse(hit);
+  const sh = ss.getSheetByName(SHEETS.ROSTER);
+  const out = [];
+  if (sh && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues().forEach(function (r) {
+    const e = String(r[0] || '').trim().toLowerCase();
+    if (e) out.push({ email: e, name: String(r[1] || '').trim(), seat: Number(r[2]) || 0, team: String(r[4] || '').trim() });
+  });
+  cache.put('ROSTER', JSON.stringify(out), 30);
+  return out;
+}
+function teamNames_(ss) {
+  const t = {};
+  roster_(ss).forEach(function (r) { if (r.team) t[r.team] = true; });
+  return Object.keys(t).sort();
+}
+function seq_(name) { return Number(PropertiesService.getScriptProperties().getProperty(name) || 0); }
+function bump_(name) { const n = seq_(name) + 1; PropertiesService.getScriptProperties().setProperty(name, String(n)); return n; }
+
+/** The room a request is about: a trainee's own team; a trainer can open any team (default: the first). */
+function roomTeam_(ss, me, asked) {
+  if (!me.trainer) return me.team;
+  const teams = teamNames_(ss), t = String(asked || '');
+  return teams.indexOf(t) >= 0 ? t : teams[0] || '';
+}
+
+/**
+ * The team room: members (online or not, and what they are working on), who is typing, and, when anything changed since
+ * ver, the team chat, the pinned announcements and the answers shared in the team. The lab asks every 2 s while it is open.
+ */
+function room_(ss, req) {
   const me = meOf_(ss, req);
-  const ch = String(req.channel || '');
-  canChat_(ss, me, ch, false);
-  const c = channel_(ss, ch);
-  if (req.ver !== undefined && req.ver !== null && Number(req.ver) === c.ver) return { same: true, ver: c.ver };
-  const trainers = getSettings_(ss).trainers;
-  return { ver: c.ver, channel: ch, canPost: ch !== CHAT.ANNOUNCE || me.trainer, messages: c.msgs.map(function (m) {
-    return { id: m.id, t: m.t, name: m.name, text: m.text, trainer: trainers.indexOf(m.email) >= 0, mine: m.email === me.email };
-  }) };
+  const s = getSettings_(ss);
+  const team = roomTeam_(ss, me, req.team);
+  const pres = JSON.parse(CacheService.getScriptCache().get('PRESENCE') || '{}'), now = Date.now();
+  const on = function (e) { return !!pres[e] && now - pres[e].t < ONLINE_MS; };
+  const members = !team ? [] : roster_(ss).filter(function (r) { return r.team === team; }).map(function (r) {
+    const p = pres[r.email] || {};
+    return { name: r.name || p.name || r.email.split('@')[0], seat: r.seat || p.seat || 0, online: on(r.email), mission: on(r.email) ? p.mission || '' : '', me: r.email === me.email };
+  }).sort(function (a, b) { return Number(b.online) - Number(a.online) || (a.seat || 99) - (b.seat || 99); });
+  const trainersOnline = s.trainers.filter(function (e) { return on(e); }).length; // the trainers listed now (Settings), not who was one earlier
+  const ver = [team ? channel_(ss, team).ver : 0, channel_(ss, CHAT.ANNOUNCE).ver, seq_('SHARE_SEQ'), seq_('TEAM_SEQ'), s.shareDays.join(',')].join('.');
+  const out = { team: team, ver: ver, trainer: me.trainer, members: members, trainersOnline: trainersOnline, typing: typingNames_(team, me.email), shareDays: s.shareDays };
+  if (me.trainer) out.teams = teamNames_(ss);
+  if (req.ver !== undefined && req.ver !== null && String(req.ver) === ver) return Object.assign(out, { same: true });
+  const view = function (m) { return { id: m.id, t: m.t, name: m.name, text: m.text, trainer: s.trainers.indexOf(m.email) >= 0, mine: m.email === me.email }; };
+  out.messages = team ? channel_(ss, team).msgs.map(view) : [];
+  out.pinned = channel_(ss, CHAT.ANNOUNCE).msgs.slice(-ROOM.PINNED).map(view);
+  out.shares = teamShares_(ss, team, me.email, s.shareDays);
+  return out;
+}
+
+function typingNames_(team, except) {
+  if (!team) return [];
+  const m = JSON.parse(CacheService.getScriptCache().get('TYPING_' + team) || '{}'), now = Date.now();
+  return Object.keys(m).filter(function (e) { return e !== except && now - m[e].t < ROOM.TYPING_MS; }).map(function (e) { return m[e].name; });
+}
+/** "is typing…" for the rest of the room (stop = sent or cleared). */
+function typing_(ss, req) {
+  const me = meOf_(ss, req);
+  const team = roomTeam_(ss, me, req.team);
+  if (!team) return { team: '' };
+  const cache = CacheService.getScriptCache(), key = 'TYPING_' + team, now = Date.now();
+  const m = JSON.parse(cache.get(key) || '{}');
+  Object.keys(m).forEach(function (e) { if (now - m[e].t > ROOM.TYPING_MS) delete m[e]; });
+  const pres = JSON.parse(cache.get('PRESENCE') || '{}');
+  if (req.stop) delete m[me.email]; else m[me.email] = { name: me.name || (pres[me.email] && pres[me.email].name) || me.email.split('@')[0], t: now };
+  cache.put(key, JSON.stringify(m), 60);
+  return { team: team };
+}
+
+// ------------------------------------------------------------------ answer sharing in a team
+/** Every share row: { id, row, t, email, name, seat, day, act, ws, on } (cached; rebuilt from the Shares tab). */
+function shares_(ss) {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('SHARES');
+  if (hit) return JSON.parse(hit);
+  const sh = ss.getSheetByName(SHEETS.SHARES);
+  const out = [];
+  if (sh && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, SHARE_HEAD.length).getValues().forEach(function (r, i) {
+    const e = String(r[2] || '').trim().toLowerCase();
+    if (e) out.push({ id: Number(r[0]), row: i + 2, t: ms_(r[1]), email: e, name: String(r[3]), seat: Number(r[4]) || 0, day: Number(r[5]) || 0, act: String(r[6]), ws: String(r[7]), on: String(r[8]).toUpperCase() === 'ON' });
+  });
+  cache.put('SHARES', JSON.stringify(out), 21600);
+  return out;
+}
+/** Answers shared in a team now: ON, on a day the trainer opened for sharing, by someone who is still in the team. No emails. */
+function teamShares_(ss, team, myEmail, shareDays) {
+  if (!team) return [];
+  const members = {};
+  roster_(ss).forEach(function (r) { if (r.team === team) members[r.email] = true; });
+  return shares_(ss).filter(function (x) { return x.on && members[x.email] && shareDays.indexOf(x.day) >= 0; })
+    .map(function (x) { return { id: x.id, name: x.name, seat: x.seat, day: x.day, act: x.act, t: x.t, mine: x.email === myEmail }; });
+}
+
+/** A trainee shares (on) or stops sharing (off) their answers of one activity with their team. */
+function share_(ss, req) {
+  const me = meOf_(ss, req);
+  if (me.trainer) throw new Error('Trainer accounts do not share answers.');
+  if (!me.team) throw new Error('You are not in a team yet. Your trainer puts you in a team.');
+  const act = String(req.act || ''), day = Number(req.day) || 0, ws = String(req.ws || ''), on = !!req.on;
+  if (!ACT_ID.test(act) || day < 1 || day > 15 || act.indexOf('d' + day + '-') !== 0 || !/^[\w.-]{1,60}$/.test(ws)) throw new Error('Unknown activity.');
+  const s = getSettings_(ss);
+  if (on && s.shareDays.indexOf(day) < 0) throw new Error('Answer sharing is off for Day ' + day + '. Your trainer turns it on.');
+  const sh = sheet_(ss, SHEETS.SHARES);
+  const r = rosterEntry_(ss, me.email);
+  let name = r && r.name, seat = r && r.seat;
+  if (!name || !seat) {
+    const pr = sheet_(ss, SHEETS.PROGRESS), row = findRow_(pr, me.email);
+    if (row) { const v = pr.getRange(row, 1, 1, 3).getValues()[0]; name = name || String(v[1]); seat = seat || Number(v[2]); }
+  }
+  const old = shares_(ss).filter(function (x) { return x.email === me.email && x.act === act; })[0];
+  const now = new Date();
+  if (old) sh.getRange(old.row, 2, 1, SHARE_HEAD.length - 1).setValues([[now, me.email, txt_(name || me.email), seat || '', day, txt_(act), txt_(ws), on ? 'ON' : 'OFF']]);
+  else if (on) sh.getRange(sh.getLastRow() + 1, 1, 1, SHARE_HEAD.length).setValues([[bump_('SHARE_ID'), now, me.email, txt_(name || me.email), seat || '', day, txt_(act), txt_(ws), 'ON']]);
+  CacheService.getScriptCache().remove('SHARES');
+  bump_('SHARE_SEQ');
+  log_(ss, me.email, on ? 'Shared answers' : 'Stopped sharing answers', act + ' with ' + me.team);
+  return { shares: teamShares_(ss, me.team, me.email, s.shareDays) };
+}
+
+/** A shared answer sheet (the owner's latest saved answers). copy = the trainee copies it: recorded in the Copies tab. */
+function shared_(ss, req) {
+  const me = meOf_(ss, req);
+  const s = getSettings_(ss);
+  const x = shares_(ss).filter(function (y) { return y.id === Number(req.id); })[0];
+  if (!x || !x.on) throw new Error('These answers are no longer shared.');
+  if (!me.trainer) {
+    const owner = roster_(ss).filter(function (r) { return r.email === x.email; })[0];
+    if (!me.team || !owner || owner.team !== me.team) throw new Error('Only members of the same team can open shared answers.');
+    if (s.shareDays.indexOf(x.day) < 0) throw new Error('Answer sharing is off for Day ' + x.day + '.');
+  }
+  const st = readState_(ss, x.email).state;
+  const raw = (st && st.ws && st.ws[x.ws]) || {};
+  const values = {};
+  Object.keys(raw).slice(0, 500).forEach(function (k) { if (typeof raw[k] === 'string' && raw[k].trim() !== '') values[k] = raw[k].slice(0, 4000); });
+  if (req.copy) {
+    if (me.trainer) throw new Error('Trainer accounts do not copy answers.');
+    if (x.email === me.email) throw new Error('These are your own answers.');
+    const p = touch_(ss, me, undefined);
+    const n = Math.max(0, Math.min(500, Number(req.fields) || 0));
+    const cp = sheet_(ss, SHEETS.COPIES);
+    cp.getRange(cp.getLastRow() + 1, 1, 1, COPY_HEAD.length).setValues([[new Date(), me.email, txt_(p.name), txt_(me.team), x.day, txt_(x.act), x.email, txt_(x.name), n]]);
+    CacheService.getScriptCache().remove('COPIES');
+    log_(ss, me.email, 'Copied answers', x.act + ': ' + n + ' answer(s) from ' + x.email);
+  }
+  return { id: x.id, name: x.name, seat: x.seat, day: x.day, act: x.act, ws: x.ws, values: values, updated: (st && st.updatedAt) || 0, mine: x.email === me.email };
+}
+
+/** Every copy: { email, act, day, from, fromName, at, n } (cached; rebuilt from the Copies tab). For the trainer. */
+function copies_(ss) {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('COPIES');
+  if (hit) return JSON.parse(hit);
+  const sh = ss.getSheetByName(SHEETS.COPIES);
+  const out = [];
+  if (sh && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, COPY_HEAD.length).getValues().forEach(function (r) {
+    const e = String(r[1] || '').trim().toLowerCase();
+    if (e) out.push({ email: e, act: String(r[5]), day: Number(r[4]) || 0, from: String(r[6]).trim().toLowerCase(), fromName: String(r[7]), at: ms_(r[0]), n: Number(r[8]) || 0 });
+  });
+  cache.put('COPIES', JSON.stringify(out), 21600);
+  return out;
+}
+
+/** Trainer: move trainees between teams (Roster column E). A trainee who is not in the Roster yet gets a row. */
+function teamSet_(ss, req) {
+  const who = trainerOnly_(ss, req);
+  const changes = Array.isArray(req.changes) ? req.changes.slice(0, 200) : [];
+  if (!changes.length) throw new Error('Nothing to change.');
+  const ro = sheet_(ss, SHEETS.ROSTER);
+  const n = ro.getLastRow();
+  const emails = n > 1 ? ro.getRange(2, 1, n - 1, 1).getValues().map(function (r) { return String(r[0]).trim().toLowerCase(); }) : [];
+  const pr = sheet_(ss, SHEETS.PROGRESS);
+  const list = changes.map(function (c) {
+    const email = String((c && c.email) || '').trim().toLowerCase();
+    const team = String((c && c.team) || '').replace(/\s+/g, ' ').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Not an email: ' + email);
+    if (team.length > ROOM.TEAM_LEN) throw new Error('Team names can be at most ' + ROOM.TEAM_LEN + ' characters.');
+    if (team.toLowerCase() === CHAT.ANNOUNCE.toLowerCase()) throw new Error('"' + CHAT.ANNOUNCE + '" cannot be a team name.');
+    return { email: email, team: team };
+  });
+  list.forEach(function (c) {
+    const i = emails.indexOf(c.email);
+    if (i >= 0) ro.getRange(i + 2, 5, 1, 1).setValues([[txt_(c.team)]]);
+    else {
+      const row = findRow_(pr, c.email);
+      const v = row ? pr.getRange(row, 1, 1, 3).getValues()[0] : [c.email, '', ''];
+      ro.getRange(ro.getLastRow() + 1, 1, 1, 5).setValues([[c.email, txt_(String(v[1] || '')), Number(v[2]) || '', 'YES', txt_(c.team)]]);
+      emails.push(c.email);
+    }
+  });
+  CacheService.getScriptCache().remove('ROSTER');
+  bump_('TEAM_SEQ');
+  log_(ss, who.email, 'Teams changed', list.map(function (c) { return c.email + ' > ' + (c.team || '(no team)'); }).join('; ').slice(0, 45000));
+  return { changed: list.length, teams: teamNames_(ss) };
 }
 
 function chatSend_(ss, req) {
@@ -565,6 +770,7 @@ function chatSend_(ss, req) {
   if (!c.msgs.some(function (m) { return m.id === id; })) c.msgs.push(msg_(row)); // (a rebuilt cache already has it)
   c.msgs = c.msgs.slice(-CHAT.KEEP); c.ver = id;
   cache.put('CH_' + ch, JSON.stringify(c), 21600);
+  if (ch !== CHAT.ANNOUNCE) { const ty = JSON.parse(cache.get('TYPING_' + ch) || '{}'); delete ty[me.email]; cache.put('TYPING_' + ch, JSON.stringify(ty), 60); }
   return { id: id, ver: c.ver };
 }
 
@@ -791,6 +997,14 @@ function setup() {
   if (rd.getLastRow() < 1) rd.getRange(1, 1, 1, REDO_HEAD.length).setValues([REDO_HEAD]);
   header_(rd, REDO_HEAD.length);
   rd.setFrozenRows(1);
+  const sa = sheet_(ss, SHEETS.SHARES);
+  if (sa.getLastRow() < 1) sa.getRange(1, 1, 1, SHARE_HEAD.length).setValues([SHARE_HEAD]);
+  header_(sa, SHARE_HEAD.length);
+  sa.setFrozenRows(1);
+  const cp = sheet_(ss, SHEETS.COPIES);
+  if (cp.getLastRow() < 1) cp.getRange(1, 1, 1, COPY_HEAD.length).setValues([COPY_HEAD]);
+  header_(cp, COPY_HEAD.length);
+  cp.setFrozenRows(1);
   const lg = sheet_(ss, SHEETS.LOG);
   if (lg.getLastRow() < 1) lg.getRange(1, 1, 1, 4).setValues([['Time', 'Email', 'Event', 'Detail']]);
   header_(lg, 4);
@@ -816,11 +1030,14 @@ function getSettings_(ss) {
   if (sh && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(function (r) { m[String(r[0]).trim()] = r[1]; });
   const open = String(m['Lab Status'] || 'OPEN').trim().toUpperCase() !== 'CLOSED';
   const od = String(m['Open Days'] === undefined ? '' : m['Open Days']).trim().toUpperCase();
-  const openDays = !open ? [] : od === 'ALL' ? Array.from({ length: 15 }, function (_, i) { return i + 1; })
-    : od.split(/[\s,;]+/).map(Number).filter(function (n) { return n >= 1 && n <= 15; });
+  const days = function (v) {
+    const t = String(v === undefined ? '' : v).trim().toUpperCase();
+    return t === 'ALL' ? Array.from({ length: 15 }, function (_, i) { return i + 1; }) : t.split(/[\s,;]+/).map(Number).filter(function (n) { return n >= 1 && n <= 15; });
+  };
   return {
     open: open,
-    openDays: openDays,
+    openDays: open ? days(od) : [],
+    shareDays: days(m['Answer Sharing']),
     requireRoster: String(m['Require Roster'] || 'NO').trim().toUpperCase() === 'YES',
     trainers: String(m['Trainer Emails'] || '').split(',').map(function (x) { return x.trim().toLowerCase(); }).filter(String),
   };
