@@ -1,0 +1,5 @@
+{
+  "url": "https://vervanttechlab.github.io/ctm-virtual-lab/",
+  "repo": "https://vervanttechlab@github.com/vervanttechlab/ctm-virtual-lab.git",
+  "note": "The desktop app loads the lab from this website when it is reachable (so updates reach every trainee without a new .exe), and falls back to the copy built into the .exe when offline. Empty url = always use the built-in copy."
+}

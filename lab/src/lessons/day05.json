@@ -1,0 +1,65 @@
+{
+ "day": 5,
+ "title": "Checking for Alerts",
+ "unit": "CS-ICT251101 Monitor and Report Cyber Threats",
+ "parts": [
+  {
+   "h": "Learning Objectives",
+   "html": "<p>At the end of this session, you should be able to:</p><ol><li>Explain what a Standard Operating Procedure (SOP) is and why alert intake follows one.</li><li>Receive and record detection alerts from SIEM, AV, firewall, WAF, DLP, EDR and NDR as per SOP (PC 1.1).</li><li>Receive and record incident reports made by phone, walk-in, email, SMS, chat and video conference (PC 1.2).</li><li>Check detections for ransomware and PE infection (virus) red flags as per SOP (PC 1.3).</li><li>Recognize social engineering attempts during intake and respond as per SOP.</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "1. What \"Checking for Alerts\" Means",
+   "html": "<p>Checking for alerts is the first element of monitoring and reporting cyber threats. A monitoring analyst receives every alert and every report, records it completely, and checks it at once for red flags. Each organization writes these steps in a Standard Operating Procedure (SOP), so that every analyst on every shift does the same thing, in the same order, within the same time limits. In the lab you follow SOC-SOP-01 Alert and Report Intake (~/day5/soc_alert_sop.txt).</p><ol><li>Receive — take the detection alert from the queue, or the report from a person (PC 1.1, 1.2).</li><li>Record — write down the facts the SOP asks for, without judging yet.</li><li>Check red flags — compare what you see with the SOP red flag list (PC 1.3). Red flags are escalated immediately.</li><li>Hand over — assessment against pre-identified criteria and ticketing follow on Day 6 (PC 1.4, 1.5).</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "2. Receiving Detection Alerts (PC 1.1)",
+   "html": "<p>A detection alert is a message from a security solution saying it saw something suspicious. The Competency Standards list seven sources. They all arrive in the SOC alert queue, usually through the SIEM.</p><table><tr><th><b>Detection Alert (CS)</b></th><th><b>What It Reports</b></th><th><b>Example from the Day 5 Queue</b></th></tr><tr><td><b>SIEM alert</b></td><td>Correlated events from many logs</td><td>\"18 logon failures then success on DC-01\"</td></tr><tr><td><b>AV alert</b></td><td>Malware found on an endpoint</td><td>\"Trojan:Win32/Wacatac.B!ml quarantined\"</td></tr><tr><td><b>Firewall alert</b></td><td>Traffic allowed or denied by rules</td><td>\"Inbound RDP denied (64 attempts in 5 min)\"</td></tr><tr><td><b>Web application firewall (WAF) alert</b></td><td>Attacks against websites</td><td>\"SQL injection blocked on /loan/apply.php\"</td></tr><tr><td><b>DLP alert</b></td><td>Sensitive data leaving the organization</td><td>\"Payroll file uploaded to personal cloud storage\"</td></tr><tr><td><b>EDR alert</b></td><td>Suspicious behavior on an endpoint</td><td>\"Mass file rename by unsigned process\"</td></tr><tr><td><b>NDR alert</b></td><td>Suspicious network behavior</td><td>\"Unusual SMB writes to \\\\FS-01\\Installers\"</td></tr></table><h3>Acknowledge on Time</h3><p>To acknowledge an alert means to take ownership of it: you change its status from New to Acknowledged so that everyone knows someone is working on it. The SOP sets a time limit for each severity. Missing it is an SLA breach (SLA = service level agreement).</p><table><tr><th><b>Severity</b></th><th><b>Acknowledge Within (SOC-SOP-01 rule A2)</b></th></tr><tr><td>Critical</td><td>15 minutes</td></tr><tr><td>High</td><td>30 minutes</td></tr><tr><td>Medium</td><td>120 minutes</td></tr><tr><td>Low</td><td>480 minutes (8 hours)</td></tr><tr><td>Informational</td><td>No acknowledgment needed (auto-closed)</td></tr></table><div class=\"box\"><b>TIP</b><br>Waiting time = now − received time. Alert Q-5006 (High) was received at 08:33:40. At 09:30 it has waited 56 minutes, which is more than 30, so it is an SLA breach: acknowledge it at once and tell the Shift Lead. Always use the same time zone (Philippine Standard Time, UTC+8).</div><h3>What to Record for Every Alert</h3><ul><li>Alert ID, time received, and time acknowledged</li><li>Source (SIEM, AV, firewall, WAF, DLP, EDR, NDR) and product</li><li>Host (affected computer) and rule or detection name</li><li>Severity and status</li><li>Whether it matches a red flag</li></ul>",
+   "videos": [
+    "Day05_Demo1_Receive_Alerts_per_SOP.mp4"
+   ]
+  },
+  {
+   "h": "3. Receiving Incident Reports from People (PC 1.2)",
+   "html": "<p>Not every threat is found by a tool. Employees, customers and partners also report what they see. The Competency Standards list six channels for a detection report:</p><table><tr><th><b>Channel (CS)</b></th><th><b>Example</b></th><th><b>Intake Tip</b></th></tr><tr><td><b>Phone call</b></td><td>An accountant calls: \"my files end in .lockd\"</td><td>Write their exact words; confirm the callback number</td></tr><tr><td><b>Walk-in</b></td><td>An engineer comes to the SOC desk</td><td>Ask what they did and when; note the PC name</td></tr><tr><td><b>Email</b></td><td>A branch forwards a suspicious email</td><td>Ask them to forward it as an attachment; do not click links</td></tr><tr><td><b>SMS</b></td><td>\"IT\" asks the SOC to text an OTP</td><td>Treat requests for passwords or OTPs as social engineering</td></tr><tr><td><b>Chat</b></td><td>A user reports a printer jam</td><td>Not a security matter: redirect to the IT Helpdesk</td></tr><tr><td><b>Video conference</b></td><td>A fake \"virus warning\" pop-up is shared on screen</td><td>Record what you saw; tell them not to call the number</td></tr></table><h3>The Intake Record</h3><ul><li>Report ID, channel, date and time received</li><li>Reporter name, department and callback number from the company directory</li><li>What they saw, in their own words</li><li>Affected computer, account or device</li><li>What they already did (clicked, opened, restarted)</li></ul><div class=\"box\"><b>NOTE — Social engineering during intake</b><br>Attackers also contact the SOC. Never ask for, or give, a password or one-time PIN (OTP). Verify phone, SMS and chat reporters by calling back the number in the company directory, not the number that contacted you. Record only the personal data the SOP needs (Data Privacy Act, RA 10173).</div>",
+   "videos": [
+    "Day05_Demo2_Incident_Report_Intake.mp4"
+   ]
+  },
+  {
+   "h": "4. Red Flag Detections (PC 1.3)",
+   "html": "<p>The Competency Standards name two red flag detections that must be checked at once: ransomware and PE infection (virus). Ransomware encrypts files and demands payment; it can stop a bank branch, school or hospital within minutes. A PE infection is a file-infector virus: it inserts its code into Portable Executable files (.exe, .dll), so every copy of an infected installer spreads it further.</p><table><tr><th><b>Code</b></th><th><b>Red Flag</b></th><th><b>What You See</b></th><th><b>Where</b></th></tr><tr><td><b>R1</b></td><td>Ransomware</td><td>Many files renamed with the same new extension in a short time</td><td>EDR file events, file shares</td></tr><tr><td><b>R2</b></td><td>Ransomware</td><td>A ransom note file appears (README_RESTORE_FILES.txt, HOW_TO_DECRYPT.txt)</td><td>Desktop, Documents, shares</td></tr><tr><td><b>R3</b></td><td>Ransomware</td><td>Shadow copy or backup deletion attempt (vssadmin delete shadows, wbadmin delete catalog)</td><td>EDR process events</td></tr><tr><td><b>R4</b></td><td>Ransomware</td><td>A detection name that contains \"Ransom\"</td><td>AV / EDR alerts</td></tr><tr><td><b>V1</b></td><td>PE infection</td><td>Many .exe or .dll files modified that should not change, by a non-updater process</td><td>EDR file events</td></tr><tr><td><b>V2</b></td><td>PE infection</td><td>A detection name that starts with \"Virus:\" (file infector)</td><td>AV alerts</td></tr><tr><td><b>V3</b></td><td>PE infection</td><td>The same detection on several hosts that used the same shared folder</td><td>AV alerts, SIEM</td></tr></table><h3>Look-alikes That Are NOT Red Flags</h3><p>Some approved software does similar things: a backup agent creates thousands of archive files, and Windows Update replaces DLLs in System32. Check the process name and its signer (the company that digitally signed the program) against the SOP approved list. In the lab: scbackup.exe signed by SafeCopy Software Inc., and TiWorker.exe signed by Microsoft Windows. An unsigned program in a Temp or Downloads folder doing the same thing is a red flag.</p><div class=\"box\"><b>TIP — First response to suspected ransomware (Level I)</b><br>Ask the user to unplug the network cable or turn off Wi-Fi. Do NOT shut the PC down: evidence in memory is lost. Never pay or contact the attacker. Escalate immediately to the Shift Lead by phone, then record it. The Shift Lead decides on isolation.</div>",
+   "videos": [
+    "Day05_Demo3_Red_Flags_Ransomware_PE.mp4"
+   ]
+  },
+  {
+   "h": "5. Security Solution Scans and Actions (RK 1.7)",
+   "html": "<p>Antivirus and EDR tools scan in different ways and take different actions. Knowing them helps you read an alert correctly.</p><table><tr><th><b>Scan or Action</b></th><th><b>Meaning</b></th></tr><tr><td>Real-time (on-access) protection</td><td>Checks each file when it is opened, downloaded or run</td></tr><tr><td>Quick scan</td><td>Checks the places malware usually hides (memory, startup, system folders)</td></tr><tr><td>Full scan</td><td>Checks every file on every drive; slow, used after an infection</td></tr><tr><td>Actions (CS Range of Variables)</td><td>Failed, Clean, Delete, Quarantine, Blocked, Re-image</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "Key Terms",
+   "html": "<table><tr><th><b>Term</b></th><th><b>Meaning</b></th></tr><tr><td>SOP</td><td>Standard Operating Procedure: the written, approved steps every analyst follows</td></tr><tr><td>Acknowledge</td><td>Take ownership of an alert so everyone knows it is being handled</td></tr><tr><td>SLA breach</td><td>Missing the time limit the SOP sets for a severity</td></tr><tr><td>Detection report</td><td>A report of a possible incident from a person (phone, walk-in, email, SMS, chat, video conference)</td></tr><tr><td>Red flag detection</td><td>A detection the SOP says must be escalated at once (ransomware, PE infection)</td></tr><tr><td>PE file</td><td>Portable Executable: a Windows program or library (.exe, .dll)</td></tr><tr><td>Signer</td><td>The company that digitally signed a program; unsigned programs deserve a closer look</td></tr><tr><td>Social engineering</td><td>Tricking people, including SOC staff, into giving access or information</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "References",
+   "html": "<ul><li>TESDA Competency Standards — Cyber Threat Monitoring Level I (ICT Sector), unit CS-ICT251101, Element 1 and Range of Variables.</li><li>NIST SP 800-61 Rev. 3, Incident Response Recommendations and Considerations for Cybersecurity Risk Management.</li><li>NIST SP 800-83 Rev. 1, Guide to Malware Incident Prevention and Handling for Desktops and Laptops.</li><li>CISA #StopRansomware Guide (cisa.gov/stopransomware).</li><li>MITRE ATT&amp;CK® T1486 Data Encrypted for Impact and T1490 Inhibit System Recovery — attack.mitre.org.</li><li>Republic Act No. 10175 (Cybercrime Prevention Act of 2012) and Republic Act No. 10173 (Data Privacy Act of 2012).</li></ul>",
+   "videos": []
+  }
+ ],
+ "files": [
+  {
+   "name": "Day 5 Student Handout",
+   "href": "days/Day05_Student_Handout.pdf",
+   "size": "324 KB"
+  },
+  {
+   "name": "Day 5 Student Activities",
+   "href": "days/Day05_Student_Activities.pdf",
+   "size": "395 KB"
+  }
+ ]
+}

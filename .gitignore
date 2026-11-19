@@ -1,1 +1,19 @@
 .DS_Store
+
+# build tooling (generated / installed)
+_build/node_modules/
+_build/pylib/
+_build/out/
+_build/video/tmp/
+_build/video/tts_cache/
+_build/package-lock.json
+lab/node_modules/
+lab/dist/
+lab/dist-e2e/
+lab/release/
+lab/test-results/
+lab/playwright-report/
+lab/public/videos/
+lab/public/days/
+lab/release-build.log
+lab/trainer/

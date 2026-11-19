@@ -1,0 +1,26 @@
+DAY 03  •  ACTIVITY ASSET Incident Narrative: "The Payroll Email" Fictitious case for Kill Chain
+mapping — training use only
+
+The following events happened at a fictitious BPO company, "StarLink Contact Solutions," over
+five days. Map each numbered event to a phase of the Cyber Kill Chain.
+No. Date/Time             Event
+1   Oct 20                The company's public website and LinkedIn pages are visited repeatedly
+                          from an overseas IP; employee names and email format (first.last@) are collected.
+2   Oct 21                The attacker prepares an Excel file named
+                          "Payroll_Adjustment_Nov.xlsm" containing a malicious macro.
+3   Oct 22 09:14          Email gateway log: email from "payroll@starlink-hr.example" with the
+                          Excel attachment delivered to 40 employees.
+4   Oct 22 09:31          EDR log: on HR-PC04, EXCEL.EXE spawns powershell.exe with an encoded
+                          command after the user clicks "Enable Content."
+5   Oct 22 09:32          EDR log: a file "msupdate.exe" is written to C:\Users\Public\ and a
+                          Run registry key "MSUpdate" is created.
+6   Oct 22 09:33 onwards  Firewall log: HR-PC04 connects to 203.0.113.45:443 every 5 minutes.
+7   Oct 24 02:10          Windows logs: the HR-PC04 account is used to log in to FILE-01 over
+                          RDP; the attacker copies the "Employee_Masterlist" folder.
+8   Oct 24 02:45          Firewall log: 3.2 GB uploaded from FILE-01 to a cloud storage site
+                          never used by the company.
+9   Oct 25 01:00          Files on FILE-01 are encrypted; a ransom note demands payment within
+                          72 hours.
+
+NOTE — Discussion Which security tools generated evidence at each step? Which alerts, if acted
+on quickly by a Level I monitor, could have stopped the attack before data was stolen?

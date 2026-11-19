@@ -1,0 +1,65 @@
+{
+ "day": 2,
+ "title": "Computing and Network Foundations for Threat Monitoring",
+ "unit": "CS-ICT251101 Monitor and Report Cyber Threats (with Common Competency ICT311203 Perform Computer Operations)",
+ "parts": [
+  {
+   "h": "Learning Objectives",
+   "html": "<p>At the end of this session, you should be able to:</p><ol><li>Use basic Windows and Linux commands to check system, process and network information.</li><li>Describe how LANs, WANs, routers, firewalls and DMZs are arranged in an organization.</li><li>Explain IP addresses, ports, protocols and port forwarding.</li><li>Explain how a web request travels from a browser to a web server and how it is logged.</li><li>Read a simple script (Python / PowerShell) and explain what it does.</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "1. Why a Monitor Needs IT Foundations",
+   "html": "<p>Every alert you receive describes something that happened on an <b>operating system</b>, a <b>network</b>, or an <b>application</b>. If an alert says \"powershell.exe spawned by winword.exe connecting to 203.0.113.50:443\", you must understand what each part means before you can judge whether it is dangerous. The Competency Standards list these as required knowledge for checking alerts.</p>",
+   "videos": []
+  },
+  {
+   "h": "2. Operating Systems",
+   "html": "<table><tr><th></th><th><b>Windows</b></th><th><b>Linux</b></th><th><b>macOS</b></th></tr><tr><td>Common use</td><td>Office PCs, Active Directory servers</td><td>Web servers, cloud, security tools</td><td>Executive and design laptops</td></tr><tr><td>Admin account</td><td>Administrator</td><td>root (use sudo)</td><td>admin user / root</td></tr><tr><td>Main logs</td><td>Event Viewer: Security, System, Application</td><td>/var/log/ (auth.log, syslog)</td><td>Console app, unified log</td></tr><tr><td>Built-in security</td><td>Microsoft Defender, Windows Firewall</td><td>iptables/nftables, AppArmor/SELinux</td><td>XProtect, Gatekeeper</td></tr></table><h3>Essential Commands for Monitoring</h3><table><tr><th><b>Purpose</b></th><th><b>Windows (CMD / PowerShell)</b></th><th><b>Linux / macOS</b></th></tr><tr><td>Show IP configuration</td><td>ipconfig /all</td><td>ip a  (macOS: ifconfig)</td></tr><tr><td>Show active connections</td><td>netstat -ano</td><td>ss -tunap  (macOS: netstat -an)</td></tr><tr><td>List running processes</td><td>tasklist  /  Get-Process</td><td>ps aux</td></tr><tr><td>System information</td><td>systeminfo</td><td>uname -a, hostnamectl</td></tr><tr><td>Who is logged in</td><td>query user</td><td>who, last</td></tr><tr><td>Test connectivity</td><td>ping, tracert</td><td>ping, traceroute</td></tr><tr><td>DNS lookup</td><td>nslookup example.com</td><td>dig example.com</td></tr></table><div class=\"box\"><b>TIP — Important Windows Event IDs</b><br>▸ <b>4624</b> successful logon, <b>4625</b> failed logon<br>▸ <b>4688</b> new process created<br>▸ <b>4720</b> user account created, <b>4732</b> user added to a security group<br>▸ <b>1116 / 1117</b> Microsoft Defender detected / took action on malware</div>",
+   "videos": [
+    "Day02_Demo1_Monitoring_Commands.mp4"
+   ]
+  },
+  {
+   "h": "3. Network Infrastructure and Architecture",
+   "html": "<table><tr><th><b>Concept</b></th><th><b>Description</b></th></tr><tr><td><b>LAN</b></td><td>Local Area Network — devices in one building or campus, e.g., the office network.</td></tr><tr><td><b>WAN</b></td><td>Wide Area Network — connects LANs over long distances, e.g., branches connected through the internet or leased lines.</td></tr><tr><td><b>Router</b></td><td>Connects different networks and forwards traffic between them.</td></tr><tr><td><b>Switch</b></td><td>Connects devices inside a LAN.</td></tr><tr><td><b>Firewall</b></td><td>Allows or blocks traffic based on rules (IP, port, application).</td></tr><tr><td><b>DMZ</b></td><td>Demilitarized zone — a separate network for public-facing servers (web, mail) so the internal LAN stays protected.</td></tr><tr><td><b>VPN</b></td><td>Encrypted tunnel for remote users or branches.</td></tr></table><h3>IP Addresses</h3><ul><li><b>Private (internal) ranges:</b> 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 — not routable on the internet.</li><li><b>Public addresses</b> — reachable from the internet. Traffic from an unknown public IP to an internal server deserves attention.</li><li>Documentation/test ranges used in our samples: 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24.</li></ul><h3>Ports and Protocols</h3><table><tr><th><b>Port</b></th><th><b>Protocol / Service</b></th><th><b>Monitoring Note</b></th></tr><tr><td>22</td><td>SSH</td><td>Remote admin on Linux; many failed logins = brute force</td></tr><tr><td>25 / 587</td><td>SMTP</td><td>Email sending; unusual volume may mean spam bot</td></tr><tr><td>53</td><td>DNS</td><td>Name lookups; very long or frequent queries may indicate tunneling</td></tr><tr><td>80 / 443</td><td>HTTP / HTTPS</td><td>Web traffic; most malware also hides here</td></tr><tr><td>445</td><td>SMB</td><td>Windows file sharing; used by worms for lateral movement</td></tr><tr><td>3389</td><td>RDP</td><td>Remote Desktop; should never be exposed directly to the internet</td></tr><tr><td>3306 / 1433</td><td>MySQL / MS SQL</td><td>Databases; should not be internet-facing</td></tr></table><h3>Port Forwarding</h3><p><b>Port forwarding</b> (also called NAT rule or \"publishing\") tells a router/firewall to send traffic arriving on a public IP and port to a specific internal IP and port. Example: public 203.0.113.10:443 → internal 10.10.20.5:443 (web server in the DMZ). Every forwarded port is a door from the internet; an unexpected forwarding rule (e.g., to port 3389) is a red flag.</p>",
+   "videos": []
+  },
+  {
+   "h": "4. Web Server and Website Architecture",
+   "html": "<ol><li>The user types a URL; <b>DNS</b> resolves the domain to an IP address.</li><li>The browser connects to the web server on port 443 (HTTPS).</li><li>The <b>web server</b> (Apache, Nginx, IIS) receives the request and passes dynamic requests to the <b>application</b> (PHP, Python, Java, .NET).</li><li>The application queries the <b>database</b> (MySQL, PostgreSQL, MS SQL).</li><li>The response goes back to the browser, and the web server writes an <b>access log</b> entry.</li></ol><h3>Reading a Web Access Log Line</h3><p>198.51.100.23 - - [03/Nov/2026:09:15:02 +0800] \"GET /login.php?user=admin' OR 1=1-- HTTP/1.1\" 403 512 \"-\" \"sqlmap/1.7\"</p><table><tr><th><b>Field</b></th><th><b>Value</b></th><th><b>Meaning</b></th></tr><tr><td>Client IP</td><td>198.51.100.23</td><td>Who made the request</td></tr><tr><td>Timestamp</td><td>03/Nov/2026 09:15:02</td><td>When</td></tr><tr><td>Request</td><td>GET /login.php?user=admin' OR 1=1--</td><td>Contains SQL injection pattern</td></tr><tr><td>Status</td><td>403</td><td>Forbidden — request was blocked</td></tr><tr><td>User-Agent</td><td>sqlmap/1.7</td><td>An automated attack tool — red flag</td></tr></table>",
+   "videos": [
+    "Day02_Demo2_Web_Log_Investigation.mp4"
+   ]
+  },
+  {
+   "h": "5. Scripting and Coding Basics",
+   "html": "<p>You do not need to be a programmer, but you must recognize what a script does because attackers use scripts (PowerShell, Python, VBScript, PHP web shells) and analysts use them to automate tasks.</p><table><tr><th><b>Language</b></th><th><b>Common Legitimate Use</b></th><th><b>Suspicious Signs</b></th></tr><tr><td>PowerShell</td><td>Windows administration</td><td>-EncodedCommand, -WindowStyle Hidden, DownloadString, IEX</td></tr><tr><td>Python</td><td>Automation, security tools</td><td>Scripts in temp folders opening network connections</td></tr><tr><td>PHP</td><td>Websites</td><td>Unknown .php files in upload folders containing eval( or base64_decode( (web shell)</td></tr><tr><td>VBScript / JavaScript</td><td>Legacy automation, web pages</td><td>Attachments like invoice.vbs or .js files from email</td></tr><tr><td>Java</td><td>Enterprise applications</td><td>Unexpected .jar files executed from Downloads</td></tr></table><div class=\"box\"><b>KEY POINT</b><br>When reading any script, ask three questions: <b>What does it read? What does it change? Where does it connect?</b></div>",
+   "videos": [
+    "Day02_Demo3_Read_Before_You_Run.mp4"
+   ]
+  },
+  {
+   "h": "Key Terms",
+   "html": "<table><tr><th><b>Term</b></th><th><b>Meaning</b></th></tr><tr><td>Port</td><td>A numbered endpoint (0–65535) identifying a network service</td></tr><tr><td>Port forwarding</td><td>A rule that sends traffic from a public IP/port to an internal IP/port</td></tr><tr><td>DMZ</td><td>Separate network segment for internet-facing servers</td></tr><tr><td>User-Agent</td><td>Text that identifies the software making a web request</td></tr><tr><td>Web shell</td><td>A malicious script uploaded to a web server to allow remote control</td></tr><tr><td>Event ID</td><td>Number that identifies the type of Windows log event</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "References",
+   "html": "<ul><li>TESDA Competency Standards — Cyber Threat Monitoring Level I (ICT Sector), units CS-ICT251101 and CS-ICT251102.</li><li>NIST SP 800-115, Technical Guide to Information Security Testing and Assessment (Chapter 4).</li><li>NIST SP 800-61 Rev. 2/Rev. 3, Computer Security Incident Handling Guide.</li><li>MITRE ATT&amp;CK® Framework — attack.mitre.org; Lockheed Martin Cyber Kill Chain®.</li><li>Republic Act No. 10175 (Cybercrime Prevention Act of 2012) and Republic Act No. 10173 (Data Privacy Act of 2012).</li></ul>",
+   "videos": []
+  }
+ ],
+ "files": [
+  {
+   "name": "Day 2 Student Handout",
+   "href": "days/Day02_Student_Handout.pdf",
+   "size": "226 KB"
+  },
+  {
+   "name": "Day 2 Student Activities",
+   "href": "days/Day02_Student_Activities.pdf",
+   "size": "398 KB"
+  }
+ ]
+}

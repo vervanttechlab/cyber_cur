@@ -1,0 +1,65 @@
+{
+ "day": 8,
+ "title": "Manual Checking and Verification",
+ "unit": "CS-ICT251101 Monitor and Report Cyber Threats",
+ "parts": [
+  {
+   "h": "Learning Objectives",
+   "html": "<p>At the end of this session, you should be able to:</p><ol><li>Check a detection yourself with its file hash, the console report and threat intelligence (PC 3.1).</li><li>Check the action of the security solution in its logs and on the host (PC 3.2).</li><li>Check security solution updates against the vendor bulletin and patch signatures as required (PC 3.3).</li><li>Use the security solution to scan an infected system, following the update-then-full-scan procedure (PC 3.4).</li><li>Record verified results and recognize failed actions that must be escalated.</li></ol>",
+   "videos": []
+  },
+  {
+   "h": "1. Trust, but Verify",
+   "html": "<p>Security consoles summarise. A good analyst checks the facts behind the summary: is the file really malicious, did the action really work, are the signatures really current, and is the infected computer really clean? Element 3 of the Competency Standards turns these checks into four performance criteria. In the lab you follow SOC-SOP-04 Manual Checking and Verification (~/day8/soc_verification_sop.txt).</p>",
+   "videos": []
+  },
+  {
+   "h": "2. Check the Detection (PC 3.1)",
+   "html": "<p>A hash is a fingerprint of a file. SHA-256 turns any file into a 64-character code; change one byte and the code is completely different. Hashes let you check a detection without opening the file.</p><table><tr><th><b>Step (SOC-SOP-04)</b></th><th><b>How</b></th><th><b>Result</b></th></tr><tr><td><b>V1.1 Compute the hash</b></td><td>sha256sum &lt;file&gt; (Linux)</td><td>Get-FileHash &lt;file&gt; (Windows)</td></tr><tr><td><b>V1.2 Compare with the console</b></td><td>Different = the file changed after the detection</td><td>Verdict: hash mismatch</td></tr><tr><td><b>V1.3 Look it up</b></td><td>Threat intelligence list = verified malicious</td><td>Vendor known-good list = false positive; neither = unknown, escalate</td></tr></table><div class=\"box\"><b>NOTE — Safe handling of samples</b><br>Never open, run or upload a suspicious file. Hashing reads the file without running it. In the lab the \"samples\" are harmless text files. In a real SOC, samples stay in a locked, isolated location, and only Tier 2 analyses them.</div>",
+   "videos": [
+    "Day08_Demo1_Verify_the_Detection.mp4"
+   ]
+  },
+  {
+   "h": "3. Check the Action (PC 3.2)",
+   "html": "<p>Microsoft Defender writes every action to its Operational event log. The event alone is not proof: check the host too.</p><table><tr><th><b>Event ID</b></th><th><b>Meaning</b></th></tr><tr><td>1116</td><td>Malware detected</td></tr><tr><td>1117</td><td>Action taken (Quarantine, Remove, Block)</td></tr><tr><td>1118</td><td>Action failed (non-critical), e.g. file in use</td></tr><tr><td>1119</td><td>Action failed (critical), e.g. access denied</td></tr><tr><td>1000 / 1001</td><td>Scan started / finished</td></tr><tr><td>2000</td><td>Security intelligence (signatures) updated</td></tr></table><ul><li>After Quarantine or Remove the file must be gone: Test-Path &lt;file&gt; returns False.</li><li>Event 1117 but the file is still there = NOT VERIFIED. Events 1118 / 1119 = FAILED.</li><li>Get-MpThreatDetection shows ActionSuccess (True/False) and ThreatStatusID (3 = quarantined, 102 = quarantine failed).</li><li>Not verified or failed actions are escalated to Tier 2 (Day 9, PC 4.3).</li></ul>",
+   "videos": [
+    "Day08_Demo2_Check_the_Action.mp4"
+   ]
+  },
+  {
+   "h": "4. Check and Patch the Updates (PC 3.3)",
+   "html": "<p>A security solution is only as good as its latest update. Compare three versions with the vendor bulletin:</p><table><tr><th><b>Version</b></th><th><b>What It Is</b></th><th><b>If Older Than the Bulletin</b></th></tr><tr><td><b>Security intelligence (signatures)</b></td><td>Descriptions of known threats; updated several times a day</td><td>Older: update now with Update-MpSignature</td></tr><tr><td><b>Engine</b></td><td>The scanning program that uses the signatures</td><td>Older: request the update from IT</td></tr><tr><td><b>Platform</b></td><td>The Defender product itself</td><td>Older: request the update from IT</td></tr></table><div class=\"box\"><b>TIP — Verify the patch</b><br>After Update-MpSignature, check Get-MpComputerStatus (AntivirusSignatureVersion) and the Defender event 2000. An update you did not verify is an update you only hope happened.</div>",
+   "videos": [
+    "Day08_Demo3_Update_and_Scan.mp4"
+   ]
+  },
+  {
+   "h": "5. Scan the Infected System (PC 3.4)",
+   "html": "<ol><li>Update the signatures first, so the scan knows the newest threats.</li><li>Run a FULL scan: Start-MpScan -ScanType FullScan. A quick scan only checks the usual hiding places (memory, startup, Temp).</li><li>Verify what was found and what happened: Get-MpThreat, Get-MpThreatDetection, events 1001, 1116, 1117/1118, Test-Path.</li><li>Record the result. A failed action is escalated (Day 9).</li></ol><p>Why the order matters: in Demo 3 a quick scan with yesterday's signatures found nothing, while the same computer, updated and fully scanned, had a trojan in AppData\\Roaming. \"No threats found\" only means \"nothing this scan knew about, in the places it looked.\"</p>",
+   "videos": []
+  },
+  {
+   "h": "Key Terms",
+   "html": "<table><tr><th><b>Term</b></th><th><b>Meaning</b></th></tr><tr><td>Hash (SHA-256)</td><td>A fixed-length fingerprint of a file; any change gives a different hash</td></tr><tr><td>Threat intelligence</td><td>Lists of known-bad indicators (hashes, IPs, domains) shared by security teams and vendors</td></tr><tr><td>Known-good list</td><td>Hashes of genuine files published by their software vendor</td></tr><tr><td>Verification</td><td>Checking a result yourself with independent evidence</td></tr><tr><td>Signatures (security intelligence)</td><td>The definitions the antivirus uses to recognise threats</td></tr><tr><td>Quick scan / full scan</td><td>A scan of common hiding places / of every file on every drive</td></tr><tr><td>Quarantine</td><td>Moving a malicious file to a locked place where it cannot run</td></tr><tr><td>Failed action</td><td>The solution tried to act and could not: it must be escalated</td></tr></table>",
+   "videos": []
+  },
+  {
+   "h": "References",
+   "html": "<ul><li>TESDA Competency Standards — Cyber Threat Monitoring Level I (ICT Sector), unit CS-ICT251101, Element 3.</li><li>Microsoft Learn — Microsoft Defender Antivirus: Update-MpSignature, Start-MpScan, Get-MpThreatDetection and event IDs 1000–1119, 2000.</li><li>Microsoft Learn — Get-FileHash; GNU coreutils — sha256sum.</li><li>NIST FIPS 180-4, Secure Hash Standard (SHA-256).</li><li>NIST SP 800-83 Rev. 1, Guide to Malware Incident Prevention and Handling for Desktops and Laptops.</li></ul>",
+   "videos": []
+  }
+ ],
+ "files": [
+  {
+   "name": "Day 8 Student Handout",
+   "href": "days/Day08_Student_Handout.pdf",
+   "size": "300 KB"
+  },
+  {
+   "name": "Day 8 Student Activities",
+   "href": "days/Day08_Student_Activities.pdf",
+   "size": "381 KB"
+  }
+ ]
+}

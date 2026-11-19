@@ -1,0 +1,66 @@
+{
+ "done": {
+  "d2-demo1": [
+   "ipconfig",
+   "netstat",
+   "tasklist",
+   "getprocess",
+   "systeminfo",
+   "quser",
+   "ipa",
+   "iproute",
+   "ss",
+   "sudoss",
+   "ps",
+   "hostnamectl",
+   "last"
+  ],
+  "d2-demo2": [
+   "wc",
+   "head",
+   "count",
+   "grepip",
+   "zgrab",
+   "xss"
+  ],
+  "d2-demo3": [
+   "read",
+   "imports",
+   "run",
+   "check57"
+  ],
+  "d2-act2.1": [
+   "w-ip",
+   "w-ports",
+   "w-procs",
+   "w-os",
+   "w-user",
+   "l-ip",
+   "l-ports",
+   "l-procs",
+   "l-os",
+   "l-user"
+  ],
+  "d2-act2.2": [
+   "open",
+   "rules"
+  ],
+  "d2-act2.3": [
+   "open",
+   "count",
+   "status",
+   "agents"
+  ],
+  "d2-act2.4": [
+   "read",
+   "imports",
+   "run"
+  ]
+ },
+ "checked": {
+  "ws-2.1": true,
+  "ws-2.2": true,
+  "ws-2.3": true,
+  "ws-2.4": true
+ }
+}
