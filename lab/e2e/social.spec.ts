@@ -17,6 +17,12 @@ async function signIn(browser: Browser, request: APIRequestContext, email: strin
   await expect(page.locator('#who')).toContainText(name);
   return page;
 }
+async function type(page: Page, line: string) {
+  await page.locator('.term.show .xterm-helper-textarea').focus();
+  await page.keyboard.type(line, { delay: 2 });
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(150);
+}
 const panel = (p: Page) => p.locator('#social');
 const tab = (p: Page, name: RegExp) => panel(p).getByRole('tab', { name });
 async function send(p: Page, text: string) {
@@ -103,8 +109,10 @@ test('Answer sharing: a teammate copies shared answers, the board flags it; the 
   const ben = await signIn(browser, request, 'ben.share@example.com', 'Ben Ramos');
   const cara = await signIn(browser, request, 'cara.share@example.com', 'Cara Diaz');
 
-  // Ana answers all of Activity 2.2 and shares it with her team
+  // Ana does both steps and answers all of Activity 2.2, then shares it with her team
   await openMission(ana, 'd2-act2.2');
+  await type(ana, 'cat ~/assets/lab_network_topology.txt');
+  await type(ana, "grep -- '->' ~/assets/lab_network_topology.txt");
   const anaWs = ana.locator('#nb-body');
   await expect(anaWs.locator('#teambar')).toContainText('Share my answers with Gold Team', { timeout: 15000 });
   const fields = anaWs.locator('[data-k]');
@@ -119,20 +127,15 @@ test('Answer sharing: a teammate copies shared answers, the board flags it; the 
   await anaWs.locator('#tb-share').check();
   await expect(ana.locator('#toast')).toContainText('your answers are shared with Gold Team');
 
-  // Ben, same team, opens the activity: a modal over the page offers to fill in his whole worksheet
-  await openMission(ben, 'd2-act2.2');
+  // Ben, same team, opens the activity: straight onto the activity (no video), his empty worksheet is filled in with
+  // Ana's answers and her finished steps at once, and it is ready to submit
+  await openMission(ben, 'd2-act2.2', { skipVideo: false });
   const dlg = ben.locator('#board-dlg');
-  await expect(dlg).toBeVisible({ timeout: 15000 });
-  await expect(dlg).toContainText("Fill in your Activity 2.2 worksheet with Ana's answers?");
+  await expect(dlg).toContainText('Every answer is filled in: ready to submit', { timeout: 15000 });
+  await expect(ben.locator('#watch')).toBeHidden();
   await expect(dlg.locator('.of-sum')).toContainText(`${total} / ${total}`);
-  await expect(dlg).toContainText('Your trainer sees that you copied, and from whom.');
-  expect(await dlg.evaluate((d) => (d as HTMLDialogElement).matches(':modal'))).toBe(true); // overlay: the page behind is blocked
-  await ben.screenshot({ path: 'e2e/shots/72-fill-offer.png' });
-  await dlg.getByRole('button', { name: 'Fill in my worksheet' }).click();
-
-  // every answer is filled in: "ready to submit", and Submit now opens the submit dialog
-  await expect(dlg).toContainText('Every answer is filled in: ready to submit');
-  await expect(dlg).toContainText('steps not done yet'); // steps are not copied
+  await expect(dlg.locator('.of-sum')).toContainText('2 / 2'); // Ana's steps are marked done for Ben
+  await expect(dlg).not.toContainText('steps not done yet');
   await ben.screenshot({ path: 'e2e/shots/73-ready-to-submit.png' });
   const benWs = ben.locator('#nb-body');
   await expect(benWs.locator('[data-k="z.1.zone"]')).toHaveValue('Internet');
@@ -159,6 +162,7 @@ test('Answer sharing: a teammate copies shared answers, the board flags it; the 
   await expect(panel(ben).locator('.soc-shares')).toContainText('Ana Lopez');
   await openMission(cara, 'd2-act2.2');
   await expect(cara.locator('#teambar')).toContainText('No teammate shares this activity yet.', { timeout: 15000 });
+  await cara.locator('#nb-body input[data-k]').first().fill('Her own answer'); // typed by Cara: a fill asks before replacing it
   await expect(cara.locator('#board-dlg')).toBeHidden(); // another team gets no offer
 
   // the trainer: the copy is flagged on the board (in the live cell, before any submission)
@@ -179,12 +183,29 @@ test('Answer sharing: a teammate copies shared answers, the board flags it; the 
   await coach.getByRole('button', { name: 'Save' }).click();
   await expect(coach.locator('#toast')).toContainText('Saved: 1 trainee moved');
   await expect(coach.locator('.tcol[data-team="Gold Team"] .tcard')).toHaveCount(3);
-  // Cara, now in Gold Team and on the activity, gets the offer at once; "Not now" closes it
+  // Cara, now in Gold Team and on the activity, has typed an answer of her own: she is asked first; "Not now" closes it
   await expect(cara.locator('#board-dlg')).toContainText("with Ana's answers?", { timeout: 15000 });
+  await expect(cara.locator('#board-dlg')).toContainText('of your answers replaced');
+  await cara.screenshot({ path: 'e2e/shots/72-fill-offer.png' });
   await cara.locator('#board-dlg').getByRole('button', { name: 'Not now' }).click();
   await expect(cara.locator('#teambar')).toContainText('Shared by Ana Lopez');
   await cara.locator('#btn-social').click();
   await expect(panel(cara).locator('.soc-head')).toContainText('Gold Team', { timeout: 8000 });
+
+  // an activity with a "Watch first" video: Ben has not watched it, yet opening the shared activity skips the video
+  // and lands on the activity, filled in (the video stays on the Demo video button)
+  await openMission(ana, 'd2-act2.1');
+  await expect(anaWs.locator('#teambar')).toContainText('Share my answers with Gold Team', { timeout: 15000 });
+  await anaWs.locator('input[data-k], textarea[data-k]').first().fill('Shared answer');
+  await anaWs.locator('#tb-share').check();
+  await expect(ana.locator('#toast')).toContainText('your answers are shared with Gold Team');
+  await ana.waitForTimeout(3000); // saved online
+  await openMission(ben, 'd2-act2.1', { skipVideo: false });
+  await expect(dlg).toContainText('answers filled in', { timeout: 15000 }); // Ana answered only one: the rest is listed
+  await expect(ben.locator('#watch')).toBeHidden();
+  await expect(ben.locator('#btn-watch-again')).toBeVisible();
+  await expect(ben.locator('#nb-body input[data-k], #nb-body textarea[data-k]').first()).toHaveValue('Shared answer');
+  await dlg.getByRole('button', { name: 'OK' }).click();
 
   // the trainer turns sharing off for the day: the share bar says so
   await request.post(`${SYNC}/__setting`, { data: { name: 'Answer Sharing', value: '' } });

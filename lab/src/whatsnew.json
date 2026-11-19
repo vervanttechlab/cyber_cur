@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-19-share-fill",
+    "date": "19 Nov 2026",
+    "title": "Shared activities open ready to submit",
+    "items": [
+      "🤝 When a teammate shares an activity, opening it takes you straight to the activity (the demo video is skipped; watch it any time with the Demo video button).",
+      "Your worksheet is filled in with your teammate's answers and their finished steps, and the lab shows Submit now.",
+      "If you already typed your own answers, the lab asks before replacing them."
+    ],
+    "trainer": [
+      "Copied steps are logged with the copied answers, and copies are still flagged ⧉ COPIED on the board. Seat-specific answers (N.4) are still not copied.",
+      "Copying steps needs the updated Code.gs: paste it, run setup, and deploy a new version."
+    ]
+  },
+  {
     "id": "2026-11-17-teams",
     "date": "17 Nov 2026",
     "title": "Team rooms, shared answers and update notices",

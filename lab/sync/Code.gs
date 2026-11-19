@@ -688,6 +688,8 @@ function shared_(ss, req) {
   const raw = (st && st.ws && st.ws[x.ws]) || {};
   const values = {};
   Object.keys(raw).slice(0, 500).forEach(function (k) { if (typeof raw[k] === 'string' && raw[k].trim() !== '') values[k] = raw[k].slice(0, 4000); });
+  const doneRaw = (st && st.done && st.done[x.act]) || [];
+  const steps = (Array.isArray(doneRaw) ? doneRaw : []).filter(function (id) { return typeof id === 'string'; }).slice(0, 100);
   if (req.copy) {
     if (me.trainer) throw new Error('Trainer accounts do not copy answers.');
     if (x.email === me.email) throw new Error('These are your own answers.');
@@ -696,9 +698,10 @@ function shared_(ss, req) {
     const cp = sheet_(ss, SHEETS.COPIES);
     cp.getRange(cp.getLastRow() + 1, 1, 1, COPY_HEAD.length).setValues([[new Date(), me.email, txt_(p.name), txt_(me.team), x.day, txt_(x.act), x.email, txt_(x.name), n]]);
     CacheService.getScriptCache().remove('COPIES');
-    log_(ss, me.email, 'Copied answers', x.act + ': ' + n + ' answer(s) from ' + x.email);
+    const ns = Math.max(0, Math.min(100, Number(req.steps) || 0));
+    log_(ss, me.email, 'Copied answers', x.act + ': ' + n + ' answer(s)' + (ns ? ' and ' + ns + ' step(s)' : '') + ' from ' + x.email);
   }
-  return { id: x.id, name: x.name, seat: x.seat, day: x.day, act: x.act, ws: x.ws, values: values, updated: (st && st.updatedAt) || 0, mine: x.email === me.email };
+  return { id: x.id, name: x.name, seat: x.seat, day: x.day, act: x.act, ws: x.ws, values: values, steps: steps, updated: (st && st.updatedAt) || 0, mine: x.email === me.email };
 }
 
 /** Every copy: { email, act, day, from, fromName, at, n } (cached; rebuilt from the Copies tab). For the trainer. */

@@ -26,7 +26,7 @@ import { onSave } from './ui/store';
 import { foldersLine } from './missions/folders';
 import { reportHtml, reportCsv, defaultDay, type ReportData } from './ui/report';
 import { Social, type StatusReply } from './ui/social';
-import { copyPlan, sharedHtml, actName, offerHtml, readyHtml, filledAfter, emptyKeys, type Share, type SharedAnswers, type Offer } from './ui/share';
+import { copyPlan, sharedHtml, actName, offerHtml, readyHtml, filledAfter, emptyKeys, sharedSteps, type Share, type SharedAnswers, type Offer } from './ui/share';
 import { Updates } from './ui/updates';
 import { teamsHtml, teamList, changes as teamChanges, balance, type TeamDraft } from './views/teams';
 import { watchFor, dayVideos, videoTitle } from './missions/watch';
@@ -520,6 +520,7 @@ function renderWatch() {
   const m = mission(), box = $('watch');
   const vids = watchFor(m, pack());
   if (!vids.length || st.watched?.[m.id] || isTrainer()) { if (!box.hidden) { box.hidden = true; box.innerHTML = ''; } return; } // trainers preview without the video gate
+  if (skipForShare(m)) return; // a teammate shared this activity: straight to the worksheet and the fill-in offer
   if (!box.hidden && box.dataset.m === m.id) return; // already showing
   box.hidden = false; box.dataset.m = m.id;
   if (watchIdx >= vids.length) watchIdx = 0;
@@ -551,6 +552,18 @@ function finishWatch(how: 'watched' | 'skipped') {
   $('watch').hidden = true; $('watch').innerHTML = '';
   showPane('term'); renderTabs();
   void maybeOffer();
+}
+/**
+ * A teammate shares this activity and its fill-in offer is still to be answered: skip the "Watch first" video (unless it is
+ * playing) so the trainee lands on the activity and gets the offer. Recorded as skipped; the video stays on the Demo video button.
+ */
+function skipForShare(m: Mission): boolean {
+  if (!pendingShares(m).length) return false;
+  const v = $('watch').querySelector('video');
+  if (v && !v.paused && !v.ended) return false; // watching on purpose: offer after the video
+  finishWatch('skipped');
+  toast(`🤝 Your teammate shared ${esc(actName(m, m.id))}: the demo video is skipped. Watch it any time with the <b>Demo video</b> button.`);
+  return true;
 }
 function markVideo(file: string) { if (!st.videos?.[file]) { (st.videos ??= {})[file] = Date.now(); save(st); } }
 
@@ -1079,11 +1092,12 @@ async function openShare(s: Share) {
   $('sh-copy')?.addEventListener('click', async () => {
     const b = $<HTMLButtonElement>('sh-copy'); b.disabled = true; b.textContent = 'Copying…';
     let fresh: SharedAnswers;
-    try { fresh = await api<SharedAnswers>('shared', { token: st.token, id: s.id, copy: true, fields: Object.keys(p0?.copy ?? {}).length }); }
+    try { fresh = await api<SharedAnswers>('shared', { token: st.token, id: s.id, copy: true, fields: Object.keys(p0?.copy ?? {}).length, steps: m ? sharedSteps(m, x).length : 0 }); }
     catch (e) { $('sh-err').textContent = (e as Error).message; b.disabled = false; b.textContent = 'Copy into my worksheet'; return; }
     const p = plan(fresh.values)!;
     offerDone([s]);
     Object.assign((st.ws[ws!.id] ??= {}), p.copy);
+    copySteps(m!, fresh);
     showMarks[ws!.id] = false;
     save(st);
     dlg.close();
@@ -1106,14 +1120,19 @@ function offerDone(list: Share[]) {
 }
 const dlgBusy = () => ['board-dlg', 'submit-dlg', 'video-dlg', 'menu-dlg', 'report-dlg', 'signin', 'update-dlg'].some((id) => $<HTMLDialogElement>(id)?.open);
 let offering = false;
-async function maybeOffer() {
-  if (offering || !st?.token || !onWork() || isTrainer() || dlgBusy() || !$('watch').hidden) return;
-  const m = mission(), ws = m.worksheet;
-  if (!isActivity(m) || !ws || !activityOpen(m.day) || !unlocked(m.day)) return;
+/** Teammates' shares of this activity whose fill-in offer I have not answered yet (empty when I cannot copy now). */
+function pendingShares(m: Mission): Share[] {
+  if (!st?.token || isTrainer() || !isActivity(m) || !m.worksheet || !activityOpen(m.day) || !unlocked(m.day)) return [];
   const info = social.info();
-  if (!info?.team || !info.shareDays.includes(m.day)) return;
+  if (!info?.team || !info.shareDays.includes(m.day)) return [];
   const done = offersDone();
-  const list = info.shares.filter((s) => !s.mine && s.act === m.id && done[s.id] !== s.t);
+  return info.shares.filter((s) => !s.mine && s.act === m.id && done[s.id] !== s.t);
+}
+async function maybeOffer() {
+  if (offering || !st?.token || !onWork() || isTrainer() || dlgBusy()) return;
+  const m = mission();
+  if (!$('watch').hidden) { skipForShare(m); return; } // skipping the video calls maybeOffer again
+  const list = pendingShares(m);
   if (!list.length) return;
   offering = true;
   try { await offerShare(m, list); } finally { offering = false; }
@@ -1132,6 +1151,30 @@ async function offerShare(m: Mission, list: Share[]) {
   if (!onWork() || mission().id !== m.id || dlgBusy()) return; // moved on while loading: offer next time
   offers.sort((a, b) => Object.keys(b.x.values).length - Object.keys(a.x.values).length || b.x.updated - a.x.updated);
   const dlg = $<HTMLDialogElement>('board-dlg');
+  /** Fill in my worksheet (and the sharer's finished steps), then "ready to submit". */
+  const fill = async (o: Offer, withSeat: boolean): Promise<string> => {
+    let fresh: SharedAnswers;
+    try { fresh = await api<SharedAnswers>('shared', { token: st.token, id: o.x.id, copy: true, fields: Object.keys(o.plan.copy).length + (withSeat ? o.plan.seatOnly.length : 0), steps: sharedSteps(m, o.x).length }); }
+    catch (e) { return (e as Error).message; }
+    if (!onWork() || mission().id !== m.id) return '';
+    const before = openDays();
+    st.ws[ws.id] = filledAfter(ws, mine(), { x: fresh, plan: plan(fresh) }, withSeat);
+    const ns = copySteps(m, fresh);
+    showMarks[ws.id] = false;
+    save(st);
+    if (dlg.open) dlg.close();
+    nbTab = 'ws'; showPane('nb'); renderMissions(); renderNotebook(); renderStatusbar(); announceUnlock(before);
+    toast(`⧉ Your worksheet is filled in with ${esc(fresh.name)}'s answers${ns ? ` and ${ns} finished step${ns === 1 ? '' : 's'}` : ''}.`);
+    showReady(m, true);
+    return '';
+  };
+  const replaces = (o: Offer) => Object.keys(o.plan.copy).some((k) => (mine()[k] ?? '').trim() !== '' && mine()[k] !== o.plan.copy[k]);
+  if (!replaces(offers[0])) { // nothing I typed is replaced: fill in at once
+    offerDone(list);
+    const err = await fill(offers[0], false);
+    if (err) toast(`Could not fill in the shared answers: ${esc(err)}`);
+    return;
+  }
   let pick = 0, withSeat = false;
   const draw = () => {
     dlg.innerHTML = offerHtml(m, offers, pick, mine(), withSeat);
@@ -1141,23 +1184,21 @@ async function offerShare(m: Mission, list: Share[]) {
     $('of-no').onclick = () => dlg.close();
     $('of-go').onclick = async () => {
       const b = $<HTMLButtonElement>('of-go'); b.disabled = true; b.textContent = 'Filling in…';
-      const o = offers[pick];
-      let fresh: SharedAnswers;
-      try { fresh = await api<SharedAnswers>('shared', { token: st.token, id: o.x.id, copy: true, fields: Object.keys(o.plan.copy).length + (withSeat ? o.plan.seatOnly.length : 0) }); }
-      catch (e) { $('of-err').textContent = (e as Error).message; b.disabled = false; b.textContent = 'Fill in my worksheet'; return; }
-      const f: Offer = { x: fresh, plan: plan(fresh) };
-      st.ws[ws.id] = filledAfter(ws, mine(), f, withSeat);
-      showMarks[ws.id] = false;
-      save(st);
-      dlg.close();
-      nbTab = 'ws'; showPane('nb'); renderNotebook(); renderStatusbar();
-      toast(`⧉ Your worksheet is filled in with ${esc(fresh.name)}'s answers.`);
-      showReady(m, true);
+      const err = await fill(offers[pick], withSeat);
+      if (err) { $('of-err').textContent = err; b.disabled = false; b.textContent = 'Fill in my worksheet'; }
     };
   };
   draw();
   dlg.addEventListener('close', () => offerDone(list), { once: true }); // filled or "Not now": asked once
   dlg.showModal();
+}
+
+/** Mark the sharer's finished steps of this activity done for me too. Returns how many were new. */
+function copySteps(m: Mission, x: SharedAnswers): number {
+  const done = new Set(st.done[m.id] ?? []), n0 = done.size;
+  for (const id of sharedSteps(m, x)) done.add(id);
+  st.done[m.id] = [...done];
+  return done.size - n0;
 }
 
 /** "Every answer is filled in: ready to submit" (or what is still empty, right after a fill). Once per worksheet per session, unless forced. */

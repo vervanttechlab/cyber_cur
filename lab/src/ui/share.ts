@@ -8,7 +8,7 @@ import { esc } from '../views/pages';
 import { ago } from '../views/board';
 
 export interface Share { id: number; name: string; seat: number; day: number; act: string; t: number; mine: boolean }
-export interface SharedAnswers { id: number; name: string; seat: number; day: number; act: string; ws: string; values: Record<string, string>; updated: number; mine: boolean }
+export interface SharedAnswers { id: number; name: string; seat: number; day: number; act: string; ws: string; values: Record<string, string>; steps?: string[]; updated: number; mine: boolean }
 export interface CopyPlan { copy: Record<string, string>; seatOnly: string[] }
 
 /**
@@ -71,6 +71,9 @@ export function filledAfter(ws: Worksheet, mine: Record<string, string>, o: Offe
   if (withSeat) for (const k of o.plan.seatOnly) out[k] = o.x.values[k];
   return out;
 }
+/** The sharer's finished steps that are steps of this activity. */
+export const sharedSteps = (m: Mission, x: SharedAnswers) => (x.steps ?? []).filter((id) => m.steps.some((s) => s.id === id));
+
 /** Answer keys still empty. */
 export const emptyKeys = (ws: Worksheet, vals: Record<string, string>) => fieldKeys(ws).filter((k) => String(vals[k] ?? '').trim() === '');
 
@@ -100,7 +103,7 @@ export function offerHtml(m: Mission, offers: Offer[], pick: number, mine: Recor
       </div>
       ${seat ? `<label class="of-seat"><input type="checkbox" id="of-seat" ${withSeat ? 'checked' : ''}> Also fill in the ${n_(seat, 'seat-specific answer')} <span class="small muted">(${esc(first)}'s seat has different evidence, so ${seat === 1 ? 'it is' : 'they are'} most likely wrong on your seat: better find ${seat === 1 ? 'it' : 'them'} with the commands on your own seat)</span></label>` : ''}
       <details><summary>Preview ${esc(first)}'s answers</summary><table class="ptable sh-table"><tbody>${rows}</tbody></table></details>
-      <p class="small muted">The steps are not copied: a step counts when you run its command on your own terminal. <b>Your trainer sees that you copied, and from whom.</b> Read each answer so you can explain it.</p>
+      <p class="small muted">${esc(first)}'s finished steps are marked done for you too. <b>Your trainer sees that you copied, and from whom.</b> Read each answer so you can explain it.</p>
       <div class="btnrow"><button class="btn primary" id="of-go">Fill in my worksheet</button><button class="btn quiet" id="of-no">Not now</button></div>
       <p class="err small" id="of-err"></p>
     </div>`;
