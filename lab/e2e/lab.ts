@@ -1,6 +1,5 @@
 // Navigation helpers for the e2e specs (the lab uses hash routes: #/day/N, #/m/<missionId>, #/workspace).
 import { expect, type Page, type APIRequestContext } from '@playwright/test';
-import { readFileSync } from 'node:fs';
 
 const SYNC = 'http://localhost:4180';
 
@@ -20,22 +19,6 @@ export async function openMission(page: Page, id: string, { skipVideo = true } =
   await goHash(page, id === 'workspace' ? '#/workspace' : `#/m/${id}`);
   await expect(page.locator('#work')).toBeVisible();
   if (skipVideo && await page.locator('#watch').isVisible()) await page.getByRole('button', { name: /Skip the video/ }).click();
-}
-
-/** Mark the Day 2 activities before `id` finished (steps from e2e/fixtures/day2-complete.json, worksheet checked),
- *  then reload: activities open in order, so Activity 2.3 needs 2.1 and 2.2 finished first. */
-export async function finishBefore(page: Page, id: string) {
-  const fx = JSON.parse(readFileSync('e2e/fixtures/day2-complete.json', 'utf-8')) as { done: Record<string, string[]>; checked: Record<string, boolean> };
-  const n = Number(id.match(/^d2-act2\.(\d)$/)![1]);
-  const ids = Array.from({ length: n - 1 }, (_, i) => `2.${i + 1}`);
-  await page.waitForTimeout(600); // the app writes to storage 250 ms after a change
-  await page.evaluate(({ ids, fx }) => {
-    const k = 'ctm-virtual-lab:v1'; const s = JSON.parse(localStorage.getItem(k)!);
-    for (const a of ids) { s.done[`d2-act${a}`] = fx.done[`d2-act${a}`]; (s.checked ??= {})[`ws-${a}`] = true; }
-    localStorage.setItem(k, JSON.stringify(s));
-  }, { ids, fx });
-  await page.reload();
-  await page.waitForFunction(() => !!document.body.dataset.route);
 }
 
 /** The status bar ("3/5 steps · 2/4 answers correct · …"). */

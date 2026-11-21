@@ -1,7 +1,7 @@
 // Teams, against the real Code.gs on the local fake server: the team room (members, live team chat with typing, pinned
 // announcements), sharing and copying answers inside a team (flagged on the Trainer board), and the trainer rearranging teams.
 import { test, expect, type Page, type APIRequestContext, type Browser } from '@playwright/test';
-import { openMission, finishBefore } from './lab';
+import { openMission } from './lab';
 
 const SYNC = 'http://localhost:4180';
 async function signIn(browser: Browser, request: APIRequestContext, email: string, name: string): Promise<Page> {
@@ -99,7 +99,6 @@ test('Team room: members, live team chat with typing, the trainer moderates and 
 });
 
 test('Answer sharing: a teammate copies shared answers, the board flags it; the trainer rearranges teams', async ({ browser, request }) => {
-  test.setTimeout(60000); // four sign-ins, three of them reloaded with Activity 2.1 finished
   await request.post(`${SYNC}/__setting`, { data: { name: 'Trainer Emails', value: 'coach.share@example.com' } });
   await request.post(`${SYNC}/__setting`, { data: { name: 'Open Days', value: '2' } });
   await request.post(`${SYNC}/__setting`, { data: { name: 'Answer Sharing', value: '2' } });
@@ -109,7 +108,6 @@ test('Answer sharing: a teammate copies shared answers, the board flags it; the 
   const ana = await signIn(browser, request, 'ana.share@example.com', 'Ana Lopez');
   const ben = await signIn(browser, request, 'ben.share@example.com', 'Ben Ramos');
   const cara = await signIn(browser, request, 'cara.share@example.com', 'Cara Diaz');
-  for (const p of [ana, ben, cara]) await finishBefore(p, 'd2-act2.2'); // activities go in order: 2.1 first
 
   // Ana does both steps and answers all of Activity 2.2, then shares it with her team
   await openMission(ana, 'd2-act2.2');

@@ -1,15 +1,15 @@
 [
   {
-    "id": "2026-11-21-activity-order",
+    "id": "2026-11-21-all-open",
     "date": "21 Nov 2026",
-    "title": "Activities now open in order",
+    "title": "Every day and activity is open",
     "items": [
-      "🔒 Each activity opens only after you finish the one before it on the same day. For example, Activity 5.2 opens after Activity 5.1 is finished.",
-      "An activity is finished when every step is done and you have pressed Check my answers.",
-      "A day still opens only when every activity of the day before is finished. Practice missions and the Workspace stay open."
+      "🔓 You can now open any day and any activity, in any order. You do not have to finish Day 2 before you start Day 3.",
+      "An activity still counts as finished when every step is done and you have pressed Check my answers.",
+      "Activities still open only on the days your trainer opens them. Practice missions and the Workspace are always open."
     ],
     "trainer": [
-      "Trainer accounts can still open every activity. No Code.gs change is needed."
+      "Days no longer unlock one by one. Use Settings › Open Days in the Sheet to control which days' Activities trainees can do. No Code.gs change is needed."
     ]
   },
   {

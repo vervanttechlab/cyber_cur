@@ -13,10 +13,7 @@ export interface PageCtx {
   packs: ScenarioPack[];
   st: LabState;
   lessons: Record<number, Lesson>;
-  unlocked(day: number): boolean;
   activityOpen(day: number): boolean;
-  /** The unfinished earlier activity of the same day that keeps this one locked, or null. */
-  blockedBy(m: Mission): Mission | null;
   gateReason(day: number): string;
   activityDone(m: Mission): boolean;
   openToday(day: number): boolean;
@@ -50,8 +47,6 @@ function actStatus(c: PageCtx, m: Mission): string {
   if (redo) return '<span class="tag warn">REDO</span><span>Your trainer returned it: fix it and submit again</span>';
   if (sub) return `<span class="tag good">SUBMITTED</span><span>${sub.score}/${sub.max}</span>${sub.verdict ? `<span class="tag ${sub.verdict === 'C' ? 'good' : 'bad'}">${verdictLabel(sub.verdict)}</span>` : '<span class="muted">waiting for trainer</span>'}`;
   if (!c.activityOpen(m.day)) return '<span class="tag">CLOSED</span><span class="muted">Opens when your trainer starts it</span>';
-  const b = c.blockedBy(m);
-  if (b) return `<span class="tag">LOCKED</span><span class="muted">Finish Activity ${esc(actNo(b))} first</span>`;
   const sc = c.score(m);
   if (c.activityDone(m)) return `<span class="tag good">FINISHED</span>${sc ? `<span>${sc.ok}/${sc.total} correct</span>` : ''}`;
   const d = stepsDone(c.st, m), ws = m.worksheet && Object.values(c.st.ws[m.worksheet.id] ?? {}).some((v) => v);
@@ -71,16 +66,14 @@ function rowNote(c: PageCtx, m: Mission): string {
 export function homeHtml(c: PageCtx): string {
   const days = c.packs.filter((p) => p.day > 0);
   const rows = days.map((p) => {
-    const open = c.unlocked(p.day);
     const acts = p.missions.filter((m) => m.kind === 'activity');
     const fin = acts.filter((m) => c.activityDone(m)).length;
-    const status = !open ? `<span class="tag">LOCKED</span><span class="muted">Finish Day ${p.day - 1} first</span>`
-      : `${c.openToday(p.day) ? '<span class="tag solid">OPEN TODAY</span>' : ''}${fin === acts.length && acts.length ? '<span class="tag good">FINISHED</span>' : ''}<span>${fin} of ${acts.length} activities finished</span>`;
+    const status = `${c.openToday(p.day) ? '<span class="tag solid">OPEN TODAY</span>' : ''}${fin === acts.length && acts.length ? '<span class="tag good">FINISHED</span>' : ''}<span>${fin} of ${acts.length} activities finished</span>`;
     const L = c.lessons[p.day];
-    return `<${open ? 'a' : 'div'} class="row daysrow${open ? '' : ' closed'}" ${open ? `href="#/day/${p.day}"` : ''}>
+    return `<a class="row daysrow" href="#/day/${p.day}">
       <div class="num">Day ${p.day}</div>
       <div><div class="title">${esc(dayTitle(p))}</div>${L?.unit ? `<div class="sub">${esc(L.unit)}</div>` : ''}<span class="bar" style="width:160px"><span style="width:${acts.length ? Math.round(100 * fin / acts.length) : 0}%"></span></span></div>
-      <div class="status">${status}</div><div class="chev">${open ? chev : lock}</div></${open ? 'a' : 'div'}>`;
+      <div class="status">${status}</div><div class="chev">${chev}</div></a>`;
   }).join('');
   const st = c.st;
   return `<div class="pagehead"><div class="kicker">Cyber Threat Monitoring Level I</div><h2>Welcome, ${esc(st.name.split(' ')[0] || st.name)}</h2>
@@ -101,11 +94,10 @@ export function dayHtml(c: PageCtx, day: number): string {
   const acts = p.missions.filter((m) => m.kind === 'activity');
   const prac = p.missions.filter((m) => m.kind === 'practice');
   const fin = acts.filter((m) => c.activityDone(m)).length;
-  const next = c.packs.find((x) => x.day === day + 1);
   const closed = acts.length > 0 && !c.activityOpen(day);
   const head = `<div class="listhead actsrow"><div>No.</div><div>Activity</div><div class="c-mode">Mode</div><div class="c-min">Time</div><div>Status</div><div></div></div>`;
   const actRows = acts.map((m) => {
-    const open = c.activityOpen(m.day) && !c.blockedBy(m);
+    const open = c.activityOpen(m.day);
     const w = watchFor(m, p);
     return `<${open ? 'a' : 'div'} class="row actsrow${open ? '' : ' closed'}" ${open ? `href="${missionHref(m)}"` : ''} data-m="${m.id}">
       <div class="num">${actNo(m)}</div><div><div class="title">${esc(actName(m))}</div>${w.length ? `<div class="sub">▶ Watch first: ${esc(w.map((f) => videoTitle(f).replace(/ · .*/, '')).join(', '))}${c.st.watched?.[m.id] === 'watched' ? ' ✓' : ''}</div>` : ''}</div>
@@ -124,7 +116,7 @@ export function dayHtml(c: PageCtx, day: number): string {
   return `${dayTabs(c, day, 'acts')}
     ${c.trainer ? `<p class="note info trainer-banner"><b>Trainer view.</b> The status column shows the class. Open an activity or practice to preview it as a trainee (your own work is not graded).<a class="btn small" href="#/board/${day}">Open Day ${day} on the Trainer board</a></p>` : ''}
     <div class="pagehead"><div class="kicker">Day ${day}${L?.unit ? ` · ${esc(L.unit)}` : ''}</div><h2>${esc(dayTitle(p))}</h2>
-      <div class="meta">${c.trainer ? `${c.openToday(day) ? 'Activities open today (Settings › Open Days)' : 'Activities closed for trainees today (Settings › Open Days in the Sheet)'}` : `${fin} of ${acts.length} activities finished`}${!c.trainer && next ? (fin === acts.length ? ` · Day ${next.day} is unlocked` : ` · finish all ${acts.length} to unlock Day ${next.day}`) : ''}</div></div>
+      <div class="meta">${c.trainer ? `${c.openToday(day) ? 'Activities open today (Settings › Open Days)' : 'Activities closed for trainees today (Settings › Open Days in the Sheet)'}` : `${fin} of ${acts.length} activities finished`}</div></div>
     <div class="toolrow">${L?.parts.length ? `<a class="btn primary" href="#/lesson/${day}">Read the lesson</a>` : ''}${vids.length ? `<button class="btn" id="btn-day-videos">▶ Watch the demo videos (${vids.length})</button>` : ''}
       ${c.trainer ? '' : '<button class="btn quiet" id="btn-day-export">Export notebook</button>'}</div>
     ${prac.length ? `<div class="label">Practice the demos · on the demo hosts</div><div class="list">${pracRows}</div>` : ''}
@@ -172,10 +164,10 @@ export function progressHtml(c: PageCtx): string {
     return acts.map((m, i) => {
       const sc = c.score(m);
       return `<tr>${i === 0 ? `<td rowspan="${acts.length}"><a href="#/day/${p.day}"><b>Day ${p.day}</b></a><div class="small muted">${esc(dayTitle(p))}</div></td>` : ''}
-        <td>${c.unlocked(p.day) && c.activityOpen(p.day) && !c.blockedBy(m) ? `<a href="${missionHref(m)}">${esc(m.title)}</a>` : esc(m.title)}</td>
+        <td>${c.activityOpen(p.day) ? `<a href="${missionHref(m)}">${esc(m.title)}</a>` : esc(m.title)}</td>
         <td>${stepsDone(c.st, m)}/${m.steps.length}</td><td>${sc ? `${sc.ok}/${sc.total}` : '–'}</td>
         <td>${(() => { const s = c.sub(m), r = c.redo(m); return r ? `<span class="tag warn">REDO</span> <span class="small">${esc(r.note)}</span>` : s ? `${s.score}/${s.max} · ${esc(when(s.ts))}${s.verdict ? ` <span class="tag ${s.verdict === 'C' ? 'good' : 'bad'}">${verdictLabel(s.verdict)}</span>` : ''}${s.feedback ? `<div class="small">${esc(s.feedback)}</div>` : ''}` : '–'; })()}</td>
-        <td>${c.activityDone(m) ? '<span class="tag good">FINISHED</span>' : c.unlocked(p.day) && !c.blockedBy(m) ? '<span class="tag">NOT FINISHED</span>' : '<span class="tag">LOCKED</span>'}</td></tr>`;
+        <td>${c.activityDone(m) ? '<span class="tag good">FINISHED</span>' : '<span class="tag">NOT FINISHED</span>'}</td></tr>`;
     }).join('');
   }).join('');
   return `<div class="pagehead"><div class="kicker">${esc(c.st.name)} · Seat ${String(c.st.seat).padStart(2, '0')}</div><h2>My progress</h2>

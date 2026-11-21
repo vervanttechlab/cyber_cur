@@ -1,4 +1,4 @@
-// Day locking and Google-Sheet progress sync (against the real Code.gs running on the local fake server).
+// Open days and activities, and Google-Sheet progress sync (against the real Code.gs running on the local fake server).
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
 import { openDay, openMission, statusBar, missionTitle, menu, signInOnline } from './lab';
 import { readFileSync } from 'node:fs';
@@ -13,32 +13,28 @@ async function type(page: Page, line: string) {
   await page.waitForTimeout(150);
 }
 
-test('Days 3 and 4 stay locked until the previous day is finished', async ({ page }) => {
+test('Every day and every activity is open in any order, finished or not', async ({ page }) => {
   await page.goto('/');
-  await page.getByLabel('Your full name').fill('Lock Test');
+  await page.getByLabel('Your full name').fill('Open Test');
   await page.getByLabel(/Seat number/).fill('20');
   await page.getByRole('button', { name: 'Start the lab' }).click();
-  await expect(page.locator('#sidenav a', { hasText: 'Threat Landscape' })).toHaveClass(/locked/);
-  await expect(page.locator('#view .row', { hasText: 'Threat Landscape' })).toContainText('Finish Day 2 first');
-  await expect(page.locator('#sidenav a', { hasText: 'Workspace' })).not.toHaveClass(/locked/); // Workspace is always open
+  await expect(page.locator('#sidenav a.locked')).toHaveCount(0);
+  await expect(page.locator('#view a.row', { hasText: 'Threat Landscape' })).toHaveAttribute('href', '#/day/3');
   await openDay(page, 2);
   await expect(page.locator('#view .pagehead')).toContainText('0 of 4 activities finished');
-  // activities go in order: only 2.1 opens until it is finished; a direct link to 2.3 goes back to the day
-  await expect(page.locator('#view a.row[data-m="d2-act2.1"]')).toHaveCount(1);
-  await expect(page.locator('#view .row[data-m="d2-act2.2"]')).toContainText('Finish Activity 2.1 first');
-  await expect(page.locator('#view a.row[data-m="d2-act2.3"]')).toHaveCount(0);
-  await page.evaluate(() => { location.hash = '#/m/d2-act2.3'; });
-  await expect(page.locator('#toast')).toContainText('Activity 2.1 is not finished yet');
-  await expect(page.locator('#work')).toBeHidden();
+  await expect(page.locator('#view a.row[data-m="d2-act2.4"]')).toHaveCount(1); // 2.4 before 2.1 is allowed
   await page.screenshot({ path: 'e2e/shots/13-locked.png' });
+  // Day 4 with nothing of Days 2 and 3 done
+  await openDay(page, 4);
+  await openMission(page, 'd4-act4.3');
+  await expect(missionTitle(page)).toContainText('Activity 4.3');
 
   await page.waitForTimeout(600); // the app writes to storage 250 ms after a change
-  // finish Day 2 (all steps done, every worksheet checked) -> Day 3 opens, Day 4 stays locked
+  // finished work still counts as finished
   await page.evaluate((fx) => { const k = 'ctm-virtual-lab:v1'; const s = JSON.parse(localStorage.getItem(k)!); s.done = { ...s.done, ...fx.done }; s.checked = fx.checked; localStorage.setItem(k, JSON.stringify(s)); }, fixture);
   await page.reload();
+  await openDay(page, 2);
   await expect(page.locator('#view .pagehead')).toContainText('4 of 4 activities finished');
-  await expect(page.locator('#sidenav a', { hasText: 'Threat Landscape' })).not.toHaveClass(/locked/);
-  await expect(page.locator('#sidenav a', { hasText: 'Security Solutions' })).toHaveClass(/locked/);
 });
 
 test('Switch user right after a change keeps the work: signing back in restores it', async ({ page, request }) => {

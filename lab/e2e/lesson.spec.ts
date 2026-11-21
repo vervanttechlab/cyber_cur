@@ -1,7 +1,7 @@
 // The DAL3-style flow: Home -> Day -> Lesson (handout parts with their demo videos) -> Activity with "Watch first".
 // Also the phone layout (one pane at a time) and the Files tab. Screenshots in e2e/shots/50-*.
 import { test, expect, type Page } from '@playwright/test';
-import { openDay, finishBefore } from './lab';
+import { openDay } from './lab';
 
 async function start(page: Page, name = 'Lesson Test', seat = '11') {
   await page.goto('/');
@@ -40,8 +40,7 @@ test('Day page, lesson reader, Watch first, Files', async ({ page }) => {
   const pdf = await page.request.get(await page.locator('#view .files a.row').first().getAttribute('href') as string);
   expect(pdf.headers()['content-type']).toContain('pdf');
 
-  // an activity opens on its demo video first; skipping is allowed and recorded (2.1 and 2.2 finished first: activities go in order)
-  await finishBefore(page, 'd2-act2.3');
+  // an activity opens on its demo video first; skipping is allowed and recorded
   await openDay(page, 2);
   await page.locator('#view .row[data-m="d2-act2.3"]').click();
   await expect(page.locator('#watch')).toBeVisible();

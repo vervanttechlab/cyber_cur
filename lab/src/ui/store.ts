@@ -38,7 +38,7 @@ export interface LabState {
   scratch?: string;
   email?: string;                               // set when signed in with the trainer's Google Sheet
   token?: string;
-  trainer?: boolean;                            // trainer accounts see every day unlocked
+  trainer?: boolean;                            // trainer accounts: the class board, and every activity open on any day
   checked?: Record<string, boolean>;            // worksheetId -> "Check my answers" was used
   videos?: Record<string, number>;              // demo video file -> first time it was opened (ms), for the Class report
   started?: Record<string, number>;             // missionId -> first time the trainee worked on it (ms), for the Class report

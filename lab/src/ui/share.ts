@@ -122,7 +122,7 @@ export function readyHtml(m: Mission, vals: Record<string, string>, stepsDone: n
     <div class="dbody ready">
       <div class="of-sum"><div><b class="big">${total} / ${total}</b><div class="small muted">answers</div></div>
         <div><b class="big ${stepsLeft ? 'no' : ''}">${stepsDone} / ${m.steps.length}</b><div class="small muted">steps done</div></div></div>
-      ${stepsLeft ? `<p class="note">${n_(stepsLeft, 'step')} not done yet. You can submit now, but your trainer sees which steps you did. To finish the activity (and unlock the next day), run ${stepsLeft === 1 ? 'it' : 'them'} on your terminal and press <b>Check my answers</b>.</p>` : ''}
+      ${stepsLeft ? `<p class="note">${n_(stepsLeft, 'step')} not done yet. You can submit now, but your trainer sees which steps you did. To finish the activity, run ${stepsLeft === 1 ? 'it' : 'them'} on your terminal and press <b>Check my answers</b>.</p>` : ''}
       ${submitted ? '<p class="small muted">You submitted this activity before. Submitting again sends this attempt; the latest one counts.</p>' : ''}
       <div class="btnrow"><button class="btn primary" id="rd-submit">${submitted ? 'Submit again' : 'Submit now'}</button><button class="btn" id="rd-check">Check my answers first</button><button class="btn quiet" id="rd-later">Later</button></div>
     </div>`;

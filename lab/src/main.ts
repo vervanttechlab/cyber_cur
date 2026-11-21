@@ -86,7 +86,7 @@ function setGate(days: unknown, trainer?: boolean) {
   if (trainer !== undefined) st.trainer = trainer;
   if (!changed || !hosts) return;
   if (!leaveLockedActivity()) onRoute(); // re-read the route: a trainer account lands on the Trainer board
-  const mine = opened.filter((d) => unlocked(d) && packOf(d));
+  const mine = opened.filter((d) => packOf(d));
   if (mine.length && !st.trainer) toast(`🔓 Your trainer opened the Day ${mine.join(', ')} Activities.`);
 }
 /** On a closed Activity: go back to its day page. True when it moved. */
@@ -99,7 +99,7 @@ function leaveLockedActivity(): boolean {
   return true;
 }
 
-// ------------------------------------------------------------------ progress, unlocking and sync summary
+// ------------------------------------------------------------------ progress and sync summary
 const isActivity = (m: Mission) => m.kind === 'activity';
 /** An activity is finished when every step is done and its worksheet has been checked at least once. */
 function activityDone(m: Mission): boolean {
@@ -118,22 +118,12 @@ function stamp(base = false) {
 }
 const packOf = (day: number) => PACKS.find((p) => p.day === day);
 function dayDone(day: number): boolean { const p = packOf(day); return !!p && p.missions.filter(isActivity).every(activityDone); }
-/** Day 2 is always open; each later day opens when every activity of the day before is finished. Trainers see all. */
-function unlocked(day: number): boolean {
-  if (day === 0 || st.trainer) return true;
-  const first = Math.min(...DAYS.map((p) => p.day));
-  if (day <= first) return true;
-  return dayDone(day - 1) && unlocked(day - 1);
+/** Every day and every activity is open in any order (only the trainer's Open Days gate applies). The latest day the
+ *  trainee has worked on (a step done or a worksheet checked), else the first day: the "Highest Day" in the Sheet. */
+function latestDay(): number {
+  const worked = DAYS.filter((p) => p.missions.some((m) => isActivity(m) && ((st.done[m.id] ?? []).length || (m.worksheet && st.checked?.[m.worksheet.id]))));
+  return (worked.length ? worked[worked.length - 1] : DAYS[0]).day;
 }
-/** The activity before this one on its day that is not finished yet (activities go in order: N.2 opens after N.1), or null. */
-function blockedBy(m: Mission): Mission | null {
-  if (!isActivity(m) || st.trainer) return null;
-  const acts = packOf(m.day)?.missions.filter(isActivity) ?? [];
-  return acts.slice(0, acts.indexOf(m)).find((x) => !activityDone(x)) ?? null;
-}
-/** A trainee may open this activity: its day is unlocked and every earlier activity of the day is finished. */
-const actUnlocked = (m: Mission) => unlocked(m.day) && !blockedBy(m);
-const actLockReason = (m: Mission) => { const b = blockedBy(m); return b ? `${b.title.replace(/ · .*/, '')} is not finished yet. Finish it first (every step done and Check my answers pressed).` : ''; };
 /** Checked score of an activity's worksheet (after "Check my answers"), or null. */
 function score(m: Mission): { ok: number; total: number } | null {
   if (!m.worksheet || !st.checked?.[m.worksheet.id]) return null;
@@ -150,7 +140,7 @@ function progressSummary() {
     days[p.day] = { done: acts.filter(activityDone).length, total: acts.length, checked, correct,
       steps: acts.reduce((n, m) => n + stepsDone(m), 0), stepsTotal: acts.reduce((n, m) => n + m.steps.length, 0) };
   }
-  const highestDay = Math.max(...DAYS.filter((p) => unlocked(p.day)).map((p) => p.day));
+  const highestDay = latestDay();
   const practice = ALL.filter((m) => m.kind === 'practice');
   const practiceDone = practice.filter((m) => stepsDone(m) === m.steps.length).length;
   const cur = mission();
@@ -299,14 +289,12 @@ function onRoute() {
   if (!st || !hosts) return;
   const r = parseRoute(location.hash);
   const day = 'day' in r ? r.day : r.name === 'work' ? ALL.find((m) => m.id === r.id)!.day : 0;
-  if (day > 0 && !unlocked(day)) { toast(`🔒 Day ${day} is locked. Finish every Day ${day - 1} activity first.`); return go('#/'); }
   if ((r.name === 'board' || r.name === 'trainee' || r.name === 'teams') && !isTrainer()) return go('#/');
   if (r.name === 'board' && r.bday) boardDay = r.bday;
   if (isTrainer() && r.name === 'day' && (!board || Date.now() - board.generated > 60000)) loadBoard(); // the class results on the Day page
   if (r.name === 'work') {
     const m = ALL.find((x) => x.id === r.id)!;
     if (m.kind === 'activity' && !activityOpen(m.day)) { toast(`🔒 ${esc(gateReason(m.day))}`); return go(`#/day/${m.day}`); }
-    if (!actUnlocked(m)) { toast(`🔒 ${esc(actLockReason(m))}`); return go(`#/day/${m.day}`); }
     if (st.missionId !== m.id || route.name !== 'work') { if (window.innerWidth <= 1100) showPane('steps'); }
     if (st.missionId !== m.id) { st.missionId = m.id; activeHost = m.hosts[0]; save(st); }
     if (!m.hosts.includes(activeHost)) activeHost = m.hosts[0];
@@ -319,7 +307,7 @@ function onRoute() {
 window.addEventListener('hashchange', onRoute);
 
 function pageCtx(): PageCtx {
-  return { packs: PACKS.filter((p) => p.day > 0), st, lessons: LESSONS, unlocked, activityOpen, gateReason, activityDone, blockedBy,
+  return { packs: PACKS.filter((p) => p.day > 0), st, lessons: LESSONS, activityOpen, gateReason, activityDone,
     openToday: (d) => !!gateDays?.includes(d), score, sub: (m) => mySubs?.latest[m.id], redo: (m) => mySubs?.redo[m.id], trainer: isTrainer(), cls };
 }
 
@@ -363,14 +351,12 @@ function renderChrome() {
     ? link('#/', r.name === 'board' || r.name === 'trainee', '<span class="sn-n">▦</span><span class="sn-t">Trainer board</span>') + link('#/teams', r.name === 'teams', '<span class="sn-n">👥</span><span class="sn-t">Teams</span>') + link('#/report', false, '<span class="sn-n">☷</span><span class="sn-t">Class report</span>', 'sn-report')
     : link('#/', r.name === 'home', '<span class="sn-n">⌂</span><span class="sn-t">Home</span>')) +
     `<div class="sn-h">${tr ? 'Days · class view and preview' : 'Training days'}</div>` + DAYS.map((p) => {
-      const open = unlocked(p.day);
-      return link(open ? `#/day/${p.day}` : '#/', curDay === p.day, `<span class="sn-n">${p.day}</span><span class="sn-t">${open ? '' : '🔒 '}${esc(dayTitle(p))}</span>${gateDays?.includes(p.day) && open ? '<span class="sn-live" title="Activities open today"></span>' : ''}`, open ? '' : 'locked');
+      return link(`#/day/${p.day}`, curDay === p.day, `<span class="sn-n">${p.day}</span><span class="sn-t">${esc(dayTitle(p))}</span>${gateDays?.includes(p.day) ? '<span class="sn-live" title="Activities open today"></span>' : ''}`);
     }).join('') +
     `<div class="sn-h">More</div>` + link('#/workspace', r.name === 'work' && mission().kind === 'workspace', '<span class="sn-n">›_</span><span class="sn-t">Workspace</span>') +
     (tr ? '' : link('#/progress', r.name === 'progress', '<span class="sn-n">✓</span><span class="sn-t">My progress</span>'));
   $('sidenav').querySelector<HTMLAnchorElement>('.sn-report')?.addEventListener('click', (e) => { e.preventDefault(); openReport(boardDay || undefined); });
-  const lastDay = DAYS.filter((p) => unlocked(p.day)).pop()!.day;
-  const dayN = curDay || lastDay;
+  const dayN = curDay || latestDay();
   $('bottomnav').innerHTML = (tr ? link('#/', r.name === 'board', '<span class="bn-i">▦</span>Board') : link('#/', r.name === 'home', '<span class="bn-i">⌂</span>Home')) + link(`#/day/${dayN}`, curDay > 0, `<span class="bn-i">☰</span>Day ${dayN}`) +
     link('#/workspace', r.name === 'work' && mission().kind === 'workspace', '<span class="bn-i">›_</span>Workspace') + link('#/progress', r.name === 'progress', '<span class="bn-i">✓</span>Progress');
 }
@@ -416,7 +402,7 @@ function renderMissions() {
   $('missions').querySelectorAll<HTMLButtonElement>('button[data-manual]').forEach((b) => b.onclick = () => {
     const m = mission(); const set = new Set(st.done[m.id] ?? []);
     if (set.has(b.dataset.manual!)) set.delete(b.dataset.manual!); else set.add(b.dataset.manual!);
-    const before = openDays(); st.done[m.id] = [...set]; save(st); renderMissions(); renderStatusbar(); announceUnlock(before);
+    const before = daysDone(); st.done[m.id] = [...set]; save(st); renderMissions(); renderStatusbar(); announceDayDone(before);
   });
   $('missions').querySelectorAll<HTMLButtonElement>('button[data-type]').forEach((b) => b.onclick = () => {
     const step = mission().steps.find((s) => s.id === b.dataset.type)!;
@@ -495,7 +481,7 @@ function showPane(p: 'steps' | 'term' | 'nb') {
 $('seg').querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.onclick = () => showPane(b.dataset.p as 'steps' | 'term' | 'nb'));
 
 function onCommand(id: HostId, e: CommandEvent) {
-  const before = openDays();
+  const before = daysDone();
   const m = mission();
   if (m.kind === 'workspace' || id.startsWith('ws-')) return; // workspace is never logged or checked
   if (m.kind === 'activity' && !activityOpen(m.day)) return; // closed activity: nothing is recorded
@@ -512,7 +498,7 @@ function onCommand(id: HostId, e: CommandEvent) {
     renderMissions(); renderStatusbar();
     if (done.size === m.steps.length) setTimeout(() => toast(m.worksheet ? `🎉 All steps done. Finish the worksheet in your Lab Notebook, then press <b>Check my answers</b>.` : `🎉 Practice complete! Pin anything useful as evidence.`), 2600);
   }
-  announceUnlock(before);
+  announceDayDone(before);
   if (nbTab === 'log') renderNotebook();
   save(st);
 }
@@ -673,7 +659,7 @@ function renderNotebook() {
 $('btn-check').onclick = () => {
   const m = mission(), ws = m.worksheet;
   if (!ws) return;
-  const before = openDays();
+  const before = daysDone();
   showMarks[ws.id] = true; regrade();
   if (Object.keys(grades[ws.id] ?? {}).some((k) => !k.startsWith('_'))) {
     (st.checked ??= {})[ws.id] = true;
@@ -681,7 +667,7 @@ $('btn-check').onclick = () => {
     if (sc) st.checks = [...(st.checks ?? []), { mission: m.id, at: Date.now(), ok: sc.ok, total: sc.total }].slice(-100);
   }
   save(st); nbTab = 'ws'; showPane('nb'); renderNotebook(); renderMissions(); renderStatusbar();
-  if (openDays() > before) { renderChrome(); toast(`🎉 Day ${m.day} finished! Day ${m.day + 1} is now unlocked.`); }
+  if (daysDone() > before) { renderChrome(); toast(`🎉 Day ${m.day} finished: every activity done!`); }
   else if (activityDone(m)) toast(`✓ ${esc(m.title)} finished.`);
   else if (!st.checked?.[ws.id]) toast('Fill in some answers first, then check.');
   else { const sc = score(m); if (sc) toast(`${sc.ok} of ${sc.total} checked answers correct.${sc.ok < sc.total ? ' Hover over a ✗ for a hint.' : ''}${(st.done[m.id] ?? []).length < m.steps.length ? ' Finish every step too.' : ''}`); }
@@ -844,7 +830,7 @@ function openSubmit() {
       const r = await api<{ attempt: number; late: boolean; subs: MySubs }>('submit', { token: st.token, day: m.day, act: m.id, title: m.title, score: p.auto, max: p.max, payload: p });
       setSubs(r.subs);
       const acts = pack().missions.filter(isActivity);
-      const next = acts.slice(acts.indexOf(m) + 1).find((x) => !mySubs?.latest[x.id] && actUnlocked(x)); // a locked one (this one not finished yet) is not offered
+      const next = acts.slice(acts.indexOf(m) + 1).find((x) => !mySubs?.latest[x.id]);
       dlg.innerHTML = `<div class="sform"><div class="kicker">Activity submitted</div><h2>✓ ${esc(m.title.replace(/ · .*/, ''))} is with your trainer</h2>
         <p>Attempt ${r.attempt} · auto-checked score <b>${p.auto} / ${p.max}</b>${r.late ? ' · sent while the Activities were closed (marked late)' : ''}.</p>
         <p class="small muted">Your trainer's verdict and feedback appear here in the lab (Day page and My progress).</p>
@@ -1093,8 +1079,8 @@ async function openShare(s: Share) {
   const m = ALL.find((y) => y.id === x.act);
   const ws = m?.worksheet;
   const plan = (vals: Record<string, string>) => (m && ws ? copyPlan(ws, vals, recheckOn(x.seat, m, vals)?.verdicts ?? {}, autoScore(ws, vals, { facts, hosts }).verdicts) : null);
-  const canCopy = !isTrainer() && !x.mine && !!ws && actUnlocked(m!) && activityOpen(m!.day);
-  const why = isTrainer() || !m ? '' : x.mine ? 'These are your own answers, as your teammates see them.' : !unlocked(m.day) ? `Day ${m.day} is still locked for you, so you cannot copy yet.` : !activityOpen(m.day) ? esc(gateReason(m.day)) : blockedBy(m) ? esc(actLockReason(m)) : '';
+  const canCopy = !isTrainer() && !x.mine && !!ws && activityOpen(m!.day);
+  const why = isTrainer() || !m ? '' : x.mine ? 'These are your own answers, as your teammates see them.' : !activityOpen(m.day) ? esc(gateReason(m.day)) : '';
   const p0 = plan(x.values);
   dlg.innerHTML = sharedHtml(x, m, p0, canCopy, why, ws ? st.ws[ws.id] ?? {} : {});
   $('sh-close').onclick = () => dlg.close();
@@ -1132,7 +1118,7 @@ const dlgBusy = () => ['board-dlg', 'submit-dlg', 'video-dlg', 'menu-dlg', 'repo
 let offering = false;
 /** Teammates' shares of this activity whose fill-in offer I have not answered yet (empty when I cannot copy now). */
 function pendingShares(m: Mission): Share[] {
-  if (!st?.token || isTrainer() || !isActivity(m) || !m.worksheet || !activityOpen(m.day) || !actUnlocked(m)) return [];
+  if (!st?.token || isTrainer() || !isActivity(m) || !m.worksheet || !activityOpen(m.day)) return [];
   const info = social.info();
   if (!info?.team || !info.shareDays.includes(m.day)) return [];
   const done = offersDone();
@@ -1167,13 +1153,13 @@ async function offerShare(m: Mission, list: Share[]) {
     try { fresh = await api<SharedAnswers>('shared', { token: st.token, id: o.x.id, copy: true, fields: Object.keys(o.plan.copy).length + (withSeat ? o.plan.seatOnly.length : 0), steps: sharedSteps(m, o.x).length }); }
     catch (e) { return (e as Error).message; }
     if (!onWork() || mission().id !== m.id) return '';
-    const before = openDays();
+    const before = daysDone();
     st.ws[ws.id] = filledAfter(ws, mine(), { x: fresh, plan: plan(fresh) }, withSeat);
     const ns = copySteps(m, fresh);
     showMarks[ws.id] = false;
     save(st);
     if (dlg.open) dlg.close();
-    nbTab = 'ws'; showPane('nb'); renderMissions(); renderNotebook(); renderStatusbar(); announceUnlock(before);
+    nbTab = 'ws'; showPane('nb'); renderMissions(); renderNotebook(); renderStatusbar(); announceDayDone(before);
     toast(`⧉ Your worksheet is filled in with ${esc(fresh.name)}'s answers${ns ? ` and ${ns} finished step${ns === 1 ? '' : 's'}` : ''}.`);
     showReady(m, true);
     return '';
@@ -1303,9 +1289,9 @@ function drawTeams() {
 }
 
 // ------------------------------------------------------------------ start
-const openDays = () => DAYS.filter((p) => unlocked(p.day)).length;
-function announceUnlock(before: number) {
-  if (openDays() > before) { renderChrome(); toast(`🎉 Day ${mission().day} finished! Day ${mission().day + 1} is now unlocked.`); }
+const daysDone = () => DAYS.filter((p) => dayDone(p.day)).length;
+function announceDayDone(before: number) {
+  if (daysDone() > before) { renderChrome(); toast(`🎉 Day ${mission().day} finished: every activity done!`); }
 }
 
 onStatus(setSyncChip);
