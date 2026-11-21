@@ -15,6 +15,8 @@ export interface PageCtx {
   lessons: Record<number, Lesson>;
   unlocked(day: number): boolean;
   activityOpen(day: number): boolean;
+  /** The unfinished earlier activity of the same day that keeps this one locked, or null. */
+  blockedBy(m: Mission): Mission | null;
   gateReason(day: number): string;
   activityDone(m: Mission): boolean;
   openToday(day: number): boolean;
@@ -48,6 +50,8 @@ function actStatus(c: PageCtx, m: Mission): string {
   if (redo) return '<span class="tag warn">REDO</span><span>Your trainer returned it: fix it and submit again</span>';
   if (sub) return `<span class="tag good">SUBMITTED</span><span>${sub.score}/${sub.max}</span>${sub.verdict ? `<span class="tag ${sub.verdict === 'C' ? 'good' : 'bad'}">${verdictLabel(sub.verdict)}</span>` : '<span class="muted">waiting for trainer</span>'}`;
   if (!c.activityOpen(m.day)) return '<span class="tag">CLOSED</span><span class="muted">Opens when your trainer starts it</span>';
+  const b = c.blockedBy(m);
+  if (b) return `<span class="tag">LOCKED</span><span class="muted">Finish Activity ${esc(actNo(b))} first</span>`;
   const sc = c.score(m);
   if (c.activityDone(m)) return `<span class="tag good">FINISHED</span>${sc ? `<span>${sc.ok}/${sc.total} correct</span>` : ''}`;
   const d = stepsDone(c.st, m), ws = m.worksheet && Object.values(c.st.ws[m.worksheet.id] ?? {}).some((v) => v);
@@ -101,7 +105,7 @@ export function dayHtml(c: PageCtx, day: number): string {
   const closed = acts.length > 0 && !c.activityOpen(day);
   const head = `<div class="listhead actsrow"><div>No.</div><div>Activity</div><div class="c-mode">Mode</div><div class="c-min">Time</div><div>Status</div><div></div></div>`;
   const actRows = acts.map((m) => {
-    const open = c.activityOpen(m.day);
+    const open = c.activityOpen(m.day) && !c.blockedBy(m);
     const w = watchFor(m, p);
     return `<${open ? 'a' : 'div'} class="row actsrow${open ? '' : ' closed'}" ${open ? `href="${missionHref(m)}"` : ''} data-m="${m.id}">
       <div class="num">${actNo(m)}</div><div><div class="title">${esc(actName(m))}</div>${w.length ? `<div class="sub">▶ Watch first: ${esc(w.map((f) => videoTitle(f).replace(/ · .*/, '')).join(', '))}${c.st.watched?.[m.id] === 'watched' ? ' ✓' : ''}</div>` : ''}</div>
@@ -168,10 +172,10 @@ export function progressHtml(c: PageCtx): string {
     return acts.map((m, i) => {
       const sc = c.score(m);
       return `<tr>${i === 0 ? `<td rowspan="${acts.length}"><a href="#/day/${p.day}"><b>Day ${p.day}</b></a><div class="small muted">${esc(dayTitle(p))}</div></td>` : ''}
-        <td>${c.unlocked(p.day) && c.activityOpen(p.day) ? `<a href="${missionHref(m)}">${esc(m.title)}</a>` : esc(m.title)}</td>
+        <td>${c.unlocked(p.day) && c.activityOpen(p.day) && !c.blockedBy(m) ? `<a href="${missionHref(m)}">${esc(m.title)}</a>` : esc(m.title)}</td>
         <td>${stepsDone(c.st, m)}/${m.steps.length}</td><td>${sc ? `${sc.ok}/${sc.total}` : '–'}</td>
         <td>${(() => { const s = c.sub(m), r = c.redo(m); return r ? `<span class="tag warn">REDO</span> <span class="small">${esc(r.note)}</span>` : s ? `${s.score}/${s.max} · ${esc(when(s.ts))}${s.verdict ? ` <span class="tag ${s.verdict === 'C' ? 'good' : 'bad'}">${verdictLabel(s.verdict)}</span>` : ''}${s.feedback ? `<div class="small">${esc(s.feedback)}</div>` : ''}` : '–'; })()}</td>
-        <td>${c.activityDone(m) ? '<span class="tag good">FINISHED</span>' : c.unlocked(p.day) ? '<span class="tag">NOT FINISHED</span>' : '<span class="tag">LOCKED</span>'}</td></tr>`;
+        <td>${c.activityDone(m) ? '<span class="tag good">FINISHED</span>' : c.unlocked(p.day) && !c.blockedBy(m) ? '<span class="tag">NOT FINISHED</span>' : '<span class="tag">LOCKED</span>'}</td></tr>`;
     }).join('');
   }).join('');
   return `<div class="pagehead"><div class="kicker">${esc(c.st.name)} · Seat ${String(c.st.seat).padStart(2, '0')}</div><h2>My progress</h2>

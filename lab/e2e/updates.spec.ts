@@ -39,8 +39,9 @@ test('a newer published lab: modal, Later keeps the work, Update now reloads wit
   await page.locator('#btn-update').click();
   await expect(dlg).toBeVisible();
   await page.unroute('**/version.json*'); // after the reload the lab is the published build
+  const reloaded = page.waitForEvent('load'); // the reload comes after the save is flushed, so wait for it, not for the current page
   await dlg.getByRole('button', { name: 'Update now' }).click();
-  await page.waitForLoadState('load');
+  await reloaded;
   await expect(page.locator('#who')).toContainText('Una Dizon');
   await openMission(page, 'd2-act2.1');
   await expect(page.locator('[data-k="t.ip.wr"]')).toHaveValue('10.10.20.121');

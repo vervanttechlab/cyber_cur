@@ -23,6 +23,13 @@ test('Days 3 and 4 stay locked until the previous day is finished', async ({ pag
   await expect(page.locator('#sidenav a', { hasText: 'Workspace' })).not.toHaveClass(/locked/); // Workspace is always open
   await openDay(page, 2);
   await expect(page.locator('#view .pagehead')).toContainText('0 of 4 activities finished');
+  // activities go in order: only 2.1 opens until it is finished; a direct link to 2.3 goes back to the day
+  await expect(page.locator('#view a.row[data-m="d2-act2.1"]')).toHaveCount(1);
+  await expect(page.locator('#view .row[data-m="d2-act2.2"]')).toContainText('Finish Activity 2.1 first');
+  await expect(page.locator('#view a.row[data-m="d2-act2.3"]')).toHaveCount(0);
+  await page.evaluate(() => { location.hash = '#/m/d2-act2.3'; });
+  await expect(page.locator('#toast')).toContainText('Activity 2.1 is not finished yet');
+  await expect(page.locator('#work')).toBeHidden();
   await page.screenshot({ path: 'e2e/shots/13-locked.png' });
 
   await page.waitForTimeout(600); // the app writes to storage 250 ms after a change

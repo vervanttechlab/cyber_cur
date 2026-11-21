@@ -1,6 +1,6 @@
 // End-to-end run of the Day 2 lab in the installed Microsoft Edge (no browser download needed).
 import { test, expect, type Page } from '@playwright/test';
-import { openDay, openMission, statusBar, missionTitle, menu } from './lab';
+import { openDay, openMission, statusBar, missionTitle, menu, finishBefore } from './lab';
 
 async function type(page: Page, line: string) {
   await page.locator('.term.show .xterm-helper-textarea').focus();
@@ -36,7 +36,8 @@ test('Day 2: sign in, practice Demo 1, do Activity 2.3, export', async ({ page }
   await page.getByRole('button', { name: /Pin last output/ }).click();
   await page.screenshot({ path: 'e2e/shots/02-demo1-ubuntu-evidence.png' });
 
-  // Activity 2.3 on the trainee's own VM
+  // Activity 2.3 on the trainee's own VM (activities open in order: 2.1 and 2.2 finished first)
+  await finishBefore(page, 'd2-act2.3');
   await openMission(page, 'd2-act2.3');
   await type(page, "awk '{print $1}' ~/assets/web_access.log | sort | uniq -c | sort -rn");
   await expect.poll(() => screen(page)).toContain('203.0.113.77');
@@ -77,6 +78,7 @@ test('Screenshot for the Demo 3 video: Activity 2.4 in the lab', async ({ page }
   await page.getByLabel('Your full name').fill('Juan Dela Cruz');
   await page.getByLabel(/Seat number/).fill('5');
   await page.getByRole('button', { name: 'Start the lab' }).click();
+  await finishBefore(page, 'd2-act2.4');
   await openMission(page, 'd2-act2.4');
   await type(page, 'cd ~/assets');
   await type(page, 'grep -n import log_counter.py');
@@ -105,6 +107,7 @@ test('Screenshots for the Demo 1 and Demo 2 videos', async ({ page }) => {
   await page.locator('[data-k="t.gw.wr"]').fill('10.10.20.1');
   await page.waitForTimeout(5600);
   await page.screenshot({ path: 'e2e/shots/06-activity21-for-video.png' });
+  await finishBefore(page, 'd2-act2.3');
   await openMission(page, 'd2-act2.3');
   await type(page, "awk '{print $1}' ~/assets/web_access.log | sort | uniq -c | sort -rn");
   await page.locator('[data-k="s.1.ip"]').fill('203.0.113.77');

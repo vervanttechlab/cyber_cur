@@ -125,6 +125,15 @@ function unlocked(day: number): boolean {
   if (day <= first) return true;
   return dayDone(day - 1) && unlocked(day - 1);
 }
+/** The activity before this one on its day that is not finished yet (activities go in order: N.2 opens after N.1), or null. */
+function blockedBy(m: Mission): Mission | null {
+  if (!isActivity(m) || st.trainer) return null;
+  const acts = packOf(m.day)?.missions.filter(isActivity) ?? [];
+  return acts.slice(0, acts.indexOf(m)).find((x) => !activityDone(x)) ?? null;
+}
+/** A trainee may open this activity: its day is unlocked and every earlier activity of the day is finished. */
+const actUnlocked = (m: Mission) => unlocked(m.day) && !blockedBy(m);
+const actLockReason = (m: Mission) => { const b = blockedBy(m); return b ? `${b.title.replace(/ · .*/, '')} is not finished yet. Finish it first (every step done and Check my answers pressed).` : ''; };
 /** Checked score of an activity's worksheet (after "Check my answers"), or null. */
 function score(m: Mission): { ok: number; total: number } | null {
   if (!m.worksheet || !st.checked?.[m.worksheet.id]) return null;
@@ -297,6 +306,7 @@ function onRoute() {
   if (r.name === 'work') {
     const m = ALL.find((x) => x.id === r.id)!;
     if (m.kind === 'activity' && !activityOpen(m.day)) { toast(`🔒 ${esc(gateReason(m.day))}`); return go(`#/day/${m.day}`); }
+    if (!actUnlocked(m)) { toast(`🔒 ${esc(actLockReason(m))}`); return go(`#/day/${m.day}`); }
     if (st.missionId !== m.id || route.name !== 'work') { if (window.innerWidth <= 1100) showPane('steps'); }
     if (st.missionId !== m.id) { st.missionId = m.id; activeHost = m.hosts[0]; save(st); }
     if (!m.hosts.includes(activeHost)) activeHost = m.hosts[0];
@@ -309,7 +319,7 @@ function onRoute() {
 window.addEventListener('hashchange', onRoute);
 
 function pageCtx(): PageCtx {
-  return { packs: PACKS.filter((p) => p.day > 0), st, lessons: LESSONS, unlocked, activityOpen, gateReason, activityDone,
+  return { packs: PACKS.filter((p) => p.day > 0), st, lessons: LESSONS, unlocked, activityOpen, gateReason, activityDone, blockedBy,
     openToday: (d) => !!gateDays?.includes(d), score, sub: (m) => mySubs?.latest[m.id], redo: (m) => mySubs?.redo[m.id], trainer: isTrainer(), cls };
 }
 
@@ -834,7 +844,7 @@ function openSubmit() {
       const r = await api<{ attempt: number; late: boolean; subs: MySubs }>('submit', { token: st.token, day: m.day, act: m.id, title: m.title, score: p.auto, max: p.max, payload: p });
       setSubs(r.subs);
       const acts = pack().missions.filter(isActivity);
-      const next = acts.slice(acts.indexOf(m) + 1).find((x) => !mySubs?.latest[x.id]);
+      const next = acts.slice(acts.indexOf(m) + 1).find((x) => !mySubs?.latest[x.id] && actUnlocked(x)); // a locked one (this one not finished yet) is not offered
       dlg.innerHTML = `<div class="sform"><div class="kicker">Activity submitted</div><h2>✓ ${esc(m.title.replace(/ · .*/, ''))} is with your trainer</h2>
         <p>Attempt ${r.attempt} · auto-checked score <b>${p.auto} / ${p.max}</b>${r.late ? ' · sent while the Activities were closed (marked late)' : ''}.</p>
         <p class="small muted">Your trainer's verdict and feedback appear here in the lab (Day page and My progress).</p>
@@ -1083,8 +1093,8 @@ async function openShare(s: Share) {
   const m = ALL.find((y) => y.id === x.act);
   const ws = m?.worksheet;
   const plan = (vals: Record<string, string>) => (m && ws ? copyPlan(ws, vals, recheckOn(x.seat, m, vals)?.verdicts ?? {}, autoScore(ws, vals, { facts, hosts }).verdicts) : null);
-  const canCopy = !isTrainer() && !x.mine && !!ws && unlocked(m!.day) && activityOpen(m!.day);
-  const why = isTrainer() || !m ? '' : x.mine ? 'These are your own answers, as your teammates see them.' : !unlocked(m.day) ? `Day ${m.day} is still locked for you, so you cannot copy yet.` : !activityOpen(m.day) ? esc(gateReason(m.day)) : '';
+  const canCopy = !isTrainer() && !x.mine && !!ws && actUnlocked(m!) && activityOpen(m!.day);
+  const why = isTrainer() || !m ? '' : x.mine ? 'These are your own answers, as your teammates see them.' : !unlocked(m.day) ? `Day ${m.day} is still locked for you, so you cannot copy yet.` : !activityOpen(m.day) ? esc(gateReason(m.day)) : blockedBy(m) ? esc(actLockReason(m)) : '';
   const p0 = plan(x.values);
   dlg.innerHTML = sharedHtml(x, m, p0, canCopy, why, ws ? st.ws[ws.id] ?? {} : {});
   $('sh-close').onclick = () => dlg.close();
@@ -1122,7 +1132,7 @@ const dlgBusy = () => ['board-dlg', 'submit-dlg', 'video-dlg', 'menu-dlg', 'repo
 let offering = false;
 /** Teammates' shares of this activity whose fill-in offer I have not answered yet (empty when I cannot copy now). */
 function pendingShares(m: Mission): Share[] {
-  if (!st?.token || isTrainer() || !isActivity(m) || !m.worksheet || !activityOpen(m.day) || !unlocked(m.day)) return [];
+  if (!st?.token || isTrainer() || !isActivity(m) || !m.worksheet || !activityOpen(m.day) || !actUnlocked(m)) return [];
   const info = social.info();
   if (!info?.team || !info.shareDays.includes(m.day)) return [];
   const done = offersDone();
